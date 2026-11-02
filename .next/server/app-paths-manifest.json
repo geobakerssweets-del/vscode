@@ -1,0 +1,12 @@
+{
+  "/icon.svg/route": "app/icon.svg/route.js",
+  "/api/auth/users/route": "app/api/auth/users/route.js",
+  "/api/auth/login/route": "app/api/auth/login/route.js",
+  "/login/page": "app/login/page.js",
+  "/page": "app/page.js",
+  "/api/vouchers/route": "app/api/vouchers/route.js",
+  "/api/[col]/route": "app/api/[col]/route.js",
+  "/api/returns/route": "app/api/returns/route.js",
+  "/api/sales/route": "app/api/sales/route.js",
+  "/api/auth/me/route": "app/api/auth/me/route.js"
+}

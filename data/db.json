@@ -44,6 +44,23 @@
   ],
   "products": [],
   "sales": [],
-  "audit": [],
+  "audit": [
+    {
+      "id": "c3581b04-9a15-4355-985e-11491f99ee2b",
+      "createdAt": "2026-11-02T03:45:11.474Z",
+      "who": "Admin",
+      "action": "Login",
+      "record": "user",
+      "summary": "Admin signed in"
+    },
+    {
+      "id": "e9cc2e5e-ea71-463f-8939-74e755e3b157",
+      "createdAt": "2026-11-02T03:19:03.264Z",
+      "who": "Admin",
+      "action": "Login",
+      "record": "user",
+      "summary": "Admin signed in"
+    }
+  ],
   "pending": []
 }

@@ -10,7 +10,7 @@ async function valid(t) {
 }
 export async function middleware(req) {
   const { pathname } = req.nextUrl;
-  if (pathname === '/login' || pathname === '/api/auth/login') return NextResponse.next();
+  if (pathname === '/login' || pathname === '/api/auth/login' || pathname === '/api/auth/users' || pathname === '/icon.svg') return NextResponse.next();
   if (await valid(req.cookies.get('session')?.value)) return NextResponse.next();
   if (pathname.startsWith('/api/')) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
   return NextResponse.redirect(new URL('/login', req.url));
