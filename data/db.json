@@ -46,6 +46,14 @@
   "sales": [],
   "audit": [
     {
+      "id": "365ebda7-5e80-4f22-b7f7-e4bcb0e56f57",
+      "createdAt": "2026-11-02T12:31:05.260Z",
+      "who": "Admin",
+      "action": "Login",
+      "record": "user",
+      "summary": "Admin signed in"
+    },
+    {
       "id": "c3581b04-9a15-4355-985e-11491f99ee2b",
       "createdAt": "2026-11-02T03:45:11.474Z",
       "who": "Admin",
