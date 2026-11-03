@@ -271,7 +271,7 @@ export default function Home() {
             {prepOpen && <p>{low > 0 ? <>{low.toLocaleString()} items are at or below their minimum stock. <button className="lnk" onClick={() => go('Purchase Invoice')}>Open Purchase Invoice</button> to restock.</> : 'No supplier due in the next 3 days, and nothing to order.'}</p>}</div>
           <button className={screen === 'Settings' ? 'on' : ''} onClick={() => go('Settings')}><Ico n="gear" s={16} /><span>{tr('Settings')}</span></button>
           <button className={screen === 'Updates' ? 'on' : ''} onClick={() => go('Updates')}><Ico n="cloud" s={16} /><span>{tr('Updates')}</span></button></aside>
-        <section>{screen !== 'Sales Invoice' && screen !== 'Sales Return' && !['Purchase Invoice', 'Cash Payment', 'Cash Receipt'].includes(screen) && <h2 className="ptitle">{screen === 'Dashboard' ? `${new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 17 ? 'Good afternoon' : 'Good evening'}, ${me.name || ''}` : tr(screen)}</h2>}
+        <section>{screen !== 'Sales Invoice' && screen !== 'Sales Return' && !['Purchase Invoice', 'Cash Payment', 'Cash Receipt'].includes(screen) && <h2 className="ptitle">{screen === 'Dashboard' ? `${!now ? 'Hello' : now.getHours() < 12 ? 'Good morning' : now.getHours() < 17 ? 'Good afternoon' : 'Good evening'}, ${me.name || ''}` : tr(screen)}</h2>}
           {posKind && <div className="postabs" role="tablist">{tabs.filter((x) => x.kind === posKind).map((x) => <div key={x.id} role="tab" aria-selected={act[posKind] === x.id} tabIndex="0" className={'ptab' + (act[posKind] === x.id ? ' on' : '')} onClick={() => setAct((s) => ({ ...s, [posKind]: x.id }))} onKeyDown={(e) => e.key === 'Enter' && setAct((s) => ({ ...s, [posKind]: x.id }))}>
             <Ico n={posKind === 'sale' ? 'cart' : 'undo'} s={14} /><span>{tabName(x)}</span>{dirty[x.id] && <i className="pdot" title="Has items that are not saved" />}
             <button className="px" title={`Close tab (${KEYS.closeTab})`} aria-label="Close tab" onClick={(e) => { e.stopPropagation(); closeTab(x.id); }}><Ico n="x" s={12} /></button></div>)}
@@ -298,7 +298,7 @@ function Sales({ edit, resume, onFinish, active = true, onDirty }) {
   const [date, setDate] = useState(e0?.date || new Date().toISOString().slice(0, 10)), [d1, setD1] = useState(a0 ? String(a0) : ''), [paid, setPaid] = useState(e0 ? String(e0.paid) : ''), [msg, setMsg] = useState('');
   const [d2, setD2] = useState(e0?.discount2 ? String(+((e0.discount2 / Math.max(1, e0.subtotal - a0)) * 100).toFixed(4)) : ''), [ask, setAsk] = useState(null), [askErr, setAskErr] = useState('');
   const [code, setCode] = useState(''), [name, setName] = useState(''), [sel, setSel] = useState(null), [qty, setQty] = useState(1), [price, setPrice] = useState(0), [disc, setDisc] = useState(0), [hi, setHi] = useState(0);
-  const [cat, setCat] = useState(false), [cq, setCq] = useState(''), [pr, setPr] = useState(null), [z, setZ0] = useState(getPrefs().size || 90), [vch, setVch] = useState([]);
+  const [cat, setCat] = useState(false), [cq, setCq] = useState(''), [pr, setPr] = useState(null), [z, setZ0] = useState(90), [vch, setVch] = useState([]);
   const setZ = (f) => setZ0((v) => { const n = typeof f === 'function' ? f(v) : f; savePrefs({ ...getPrefs(), size: n }); return n; });
   const latest = useRef(null), codeRef = useRef(), qtyRef = useRef(), custRef = useRef(), cashRef = useRef();
   const load = () => {
@@ -307,6 +307,7 @@ function Sales({ edit, resume, onFinish, active = true, onDirty }) {
   };
   useEffect(() => { load(); if (active) codeRef.current?.focus(); if (resume) api('pending/' + resume.id, 'DELETE'); return () => onDirty?.(false); }, []);
   const first = useRef(true);
+  useEffect(() => { setZ0(getPrefs().size || 90); }, []); // read the saved size after the page has loaded, so the server and browser agree on first paint
   useEffect(() => { if (first.current) { first.current = false; return; } if (active) { load(); setTimeout(() => codeRef.current?.focus(), 0); } }, [active]);
   useEffect(() => { onDirty?.(cart.length > 0); }, [cart.length]);
 
