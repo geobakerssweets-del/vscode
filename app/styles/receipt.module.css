@@ -1,0 +1,80 @@
+/* receipt.module.css — Printed receipts (sales, returns, purchases, vouchers, advance orders) and the on-screen preview. */
+
+.receipt {
+  flex:none;
+  background:var(--c-white);
+  border:1px solid #d6dbe8;
+  padding:14px 12px;
+  font:12px "Courier New",monospace;
+  box-shadow:0 2px 8px #0001;
+}
+
+.receipt hr {
+  border:0;
+  border-top:1px dashed #889;
+  margin:8px 0;
+}
+
+.rc {
+  text-align:center;
+}
+
+.rl {
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+}
+
+.receipt :global(.big) {
+  font-size:15px;
+  font-weight:700;
+}
+
+.receipt :global(.sm) {
+  font-size:11px;
+}
+
+.receipt :global(.b) {
+  font-weight:700;
+}
+
+.receipt {
+  position:absolute;
+  left:-9999px;
+  top:0;
+}
+
+@media print {
+  .receipt,
+  .receipt * {
+    visibility:visible;
+  }
+  .receipt {
+    position:fixed;
+    left:0;
+    top:0;
+    border:0;
+    box-shadow:none;
+  }
+}
+
+.receipt {
+  width:var(--rw,290px);
+}
+
+@media print {
+  .receipt {
+    width:var(--pw,80mm)!important;
+  }
+}
+
+.receipt img {
+  max-width:100%;
+  height:auto;
+  display:block;
+  margin:0 auto 4px;
+}
+
+.receipt {
+  border-radius:2px;
+}

@@ -1,0 +1,136 @@
+/* forms.module.css — Reusable form pieces: fieldsets, radio rows, input groups with units, filter bars, form wrappers. */
+
+.filters {
+  display:flex;
+  gap:6px;
+  align-items:center;
+  margin-bottom:10px;
+}
+
+.filters input {
+  width:auto;
+}
+
+.pform {
+  background:var(--c-white);
+  border:1px solid var(--c-border);
+  border-radius:var(--r-md);
+  padding:12px;
+  overflow-x:auto;
+}
+
+.pform label {
+  font-weight:700;
+  font-size:12px;
+  color:#334;
+}
+
+.ssub {
+  margin:0 0 10px!important;
+  color:#556;
+}
+
+.unit {
+  display:flex;
+  align-items:center;
+  border:1px solid var(--c-border-input);
+  border-radius:var(--r-sm);
+  background:var(--c-white);
+  overflow:hidden;
+}
+
+.unit input {
+  border:0;
+  text-align:right;
+}
+
+.unit span {
+  padding:0 10px;
+  color:var(--c-text-soft);
+}
+
+[data-theme=dark] .unit {
+  background:var(--dk-field);
+  color:var(--dk-text);
+  border-color:var(--dk-field-line);
+}
+
+.ssub {
+  font-size:12px;
+}
+
+.cvrow {
+  display:flex;
+  gap:10px;
+  align-items:flex-end;
+  flex-wrap:wrap;
+}
+
+.cvrow>div {
+  min-width:0;
+}
+
+.cvrow label {
+  font-weight:700;
+  font-size:12px;
+  margin-bottom:3px;
+  display:block;
+}
+
+.fs {
+  border:1px solid var(--line);
+  border-radius:var(--r-lg);
+  padding:6px 16px 12px;
+  margin:10px 0;
+  background:var(--surface);
+}
+
+.fs legend {
+  padding:0 6px;
+  color:var(--ac,#b4443a);
+  font-weight:600;
+}
+
+.fs:global(.wide) {
+  margin-top:0;
+}
+
+.rad {
+  display:flex;
+  align-items:center;
+  gap:9px;
+  margin:9px 0;
+  color:var(--text);
+  font-weight:400;
+  font-size:13px;
+}
+
+.rad input {
+  width:auto;
+}
+
+.fs:global(.po) {
+  display:flex;
+  gap:22px;
+  align-items:center;
+  margin:0;
+  padding:4px 16px 8px;
+}
+
+.fs:global(.po) .rad {
+  margin:4px 0;
+}
+
+.pform {
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.pform>:global(.hint) {
+  margin:0;
+}
+
+:global(.phx) .fs {
+  margin:0;
+}

@@ -42,8 +42,88 @@
       "passwordHash": "e03548023fc18317e9d8b75b6a5e1004:9894e37c987a7f10d0d3f534ac88e924cb04ee8a297b83c4572b395a39c0fe3b833f941cea1ffa06957e74c3608737ddfe53c5708d36c1c4141513c36aab66fa"
     }
   ],
-  "products": [],
-  "sales": [],
-  "audit": [],
+  "products": [
+    {
+      "id": "ade124a6-0b98-42c5-95cf-5a6c102b6a2c",
+      "createdAt": "2026-11-08T02:24:33.335Z",
+      "code": "",
+      "barcode": "11111111",
+      "name": "PAPY",
+      "unit": "pc",
+      "costPrice": 200,
+      "profitPct": 25,
+      "salePrice": 250,
+      "discPct": 0,
+      "company": "NO CO",
+      "category": "",
+      "supplier": "(baked here)",
+      "location": "",
+      "stock": -1,
+      "minStock": 0,
+      "askQty": false,
+      "loose": false,
+      "expiry": false,
+      "inHouse": false,
+      "active": true,
+      "pid": 1
+    }
+  ],
+  "sales": [
+    {
+      "id": "ae2b1236-3d39-4eac-9374-9e181506889e",
+      "createdAt": "2026-11-08T02:25:25.220Z",
+      "billNo": "T11-00001",
+      "type": "CASH",
+      "customer": "Walk-in customer",
+      "remarks": "",
+      "date": "2026-11-08",
+      "items": [
+        {
+          "productId": "ade124a6-0b98-42c5-95cf-5a6c102b6a2c",
+          "code": "11111111",
+          "name": "PAPY",
+          "qty": 1,
+          "rate": 250,
+          "disc": 0,
+          "taken": true
+        }
+      ],
+      "subtotal": 250,
+      "discount": 0,
+      "discount1": 0,
+      "discount2": 0,
+      "total": 250,
+      "paid": 250,
+      "change": 0,
+      "balance": 0,
+      "cashier": "Admin"
+    }
+  ],
+  "audit": [
+    {
+      "id": "d9424989-252a-467b-9a6c-0b507a5ad045",
+      "createdAt": "2026-11-08T02:25:25.221Z",
+      "who": "Admin",
+      "action": "Create",
+      "record": "sale",
+      "summary": "Sale T11-00001 · 1 items"
+    },
+    {
+      "id": "ea964b8d-5c58-491a-a5df-6817de147f4d",
+      "createdAt": "2026-11-08T02:24:33.336Z",
+      "who": "Admin",
+      "action": "Create",
+      "record": "product",
+      "summary": "Added PAPY"
+    },
+    {
+      "id": "0253c0b3-838b-4931-b35e-13a28cb54aa4",
+      "createdAt": "2026-11-08T02:15:14.007Z",
+      "who": "Admin",
+      "action": "Backup",
+      "record": "data",
+      "summary": "Downloaded a full backup"
+    }
+  ],
   "pending": []
 }

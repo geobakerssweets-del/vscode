@@ -1,10 +1,11 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import NumPad, { applyKey } from '@/components/NumPad';
+import cssLogin from './login.module.css';
 
 function Logo() {
   return (
-    <svg className="llogo" viewBox="0 0 64 64" role="img" aria-label="Falcon">
+    <svg className={cssLogin.llogo} viewBox="0 0 64 64" role="img" aria-label="Falcon">
       <circle cx="32" cy="32" r="31" fill="#1a1a1a" />
       <path d="M12 42C20 31 33 22 52 19C45 25 40 29 38 35C31 35 22 38 12 42Z" fill="#f57c00" />
       <path d="M17 49C26 42 35 42 46 39C42 45 35 50 26 51Z" fill="#ffb25b" />
@@ -32,34 +33,34 @@ export default function Login() {
   };
 
   return (
-    <div className="login"><div className="lwin">
-      <div className="lhead">Falcon &nbsp;–&nbsp; Sign In</div>
-      <aside className="lside">
+    <div className={cssLogin.login}><div className={cssLogin.lwin}>
+      <div className={cssLogin.lhead}>Falcon &nbsp;–&nbsp; Sign In</div>
+      <aside className={cssLogin.lside}>
         <Logo />
-        <p className="laddr">{info.address}</p>
-        <p className="ltag">Counter sales, purchases, stock and accounts in one place. Keeps working without internet.</p>
-        <div className="ltill">Till: {info.till}</div>
+        <p className={cssLogin.laddr}>{info.address}</p>
+        <p className={cssLogin.ltag}>Counter sales, purchases, stock and accounts in one place. Keeps working without internet.</p>
+        <div className={cssLogin.ltill}>Till: {info.till}</div>
       </aside>
-      <main className="lmain">
+      <main className={cssLogin.lmain}>
         {!who ? (<>
           <h1>Who is at the counter?</h1>
-          <p className="lhint">Click your name, then enter your PIN.</p>
-          {err && <p className="lerr" role="alert">{err}</p>}
-          {loaded && !err && !info.users.length && <p className="lerr">No active users found.</p>}
-          <div className="lusers">{info.users.map((u) => (
-            <button key={u.id} type="button" onClick={() => pick(u)}><span className="av">{u.name[0]?.toUpperCase()}</span><div><b>{u.name}</b><span>{u.role}</span></div></button>
+          <p className={cssLogin.lhint}>Click your name, then enter your PIN.</p>
+          {err && <p className={cssLogin.lerr} role="alert">{err}</p>}
+          {loaded && !err && !info.users.length && <p className={cssLogin.lerr}>No active users found.</p>}
+          <div className={cssLogin.lusers}>{info.users.map((u) => (
+            <button key={u.id} type="button" onClick={() => pick(u)}><span className={cssLogin.av}>{u.name[0]?.toUpperCase()}</span><div><b>{u.name}</b><span>{u.role}</span></div></button>
           ))}</div>
         </>) : (<>
           <h1>Enter your PIN</h1>
-          <p className="lhint">Signing in as {who.name}.</p>
-          <form className="lpin" onSubmit={go}>
-            <div className="lcol">
-              <div className="lwho"><span className="av">{who.name[0]?.toUpperCase()}</span><div><b>{who.name}</b><span>{who.role}</span></div></div>
+          <p className={cssLogin.lhint}>Signing in as {who.name}.</p>
+          <form className={cssLogin.lpin} onSubmit={go}>
+            <div className={cssLogin.lcol}>
+              <div className={cssLogin.lwho}><span className={cssLogin.av}>{who.name[0]?.toUpperCase()}</span><div><b>{who.name}</b><span>{who.role}</span></div></div>
               <label htmlFor="pin">PIN</label>
               <input id="pin" ref={pinRef} type="password" value={pin} onChange={(e) => setPin(e.target.value)} autoComplete="current-password" />
-              {err && <p className="lerr" role="alert">{err}</p>}
+              {err && <p className={cssLogin.lerr} role="alert">{err}</p>}
               <button className="pri" disabled={busy || !pin}>{busy ? 'Signing in…' : 'Sign in'}</button>
-              <button type="button" className="lback" onClick={back}>Not {who.name}? Change user</button>
+              <button type="button" className={cssLogin.lback} onClick={back}>Not {who.name}? Change user</button>
             </div>
             <NumPad onKey={(k) => setPin((v) => applyKey(v, k))} />
           </form>

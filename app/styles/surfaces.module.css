@@ -1,0 +1,24 @@
+/* surfaces.module.css — Card surfaces and the date-range pill used by Dashboard and the report screens. */
+
+.card {
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--r-xl);
+  box-shadow:var(--shadow);
+}
+
+.card:global(.pad) {
+  padding:16px 18px;
+}
+
+.dr {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  color:var(--muted);
+}
+
+.dr input {
+  width:140px;
+  padding:6px 8px;
+}

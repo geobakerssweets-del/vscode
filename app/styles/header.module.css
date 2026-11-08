@@ -1,0 +1,125 @@
+/* header.module.css — Top bar: title line, main tabs (SALES, PURCHASE ...), icon buttons, sign out. */
+
+.titleline {
+  letter-spacing:.3px;
+}
+
+.tabs {
+  display:flex;
+}
+
+.tabs>button {
+  background:none;
+}
+
+[data-theme=dark] .titleline,
+[data-theme=dark] .tabs {
+  color:var(--dk-text-soft);
+  border-color:var(--dk-line);
+}
+
+[data-theme=dark] .tabs>button {
+  color:var(--dk-text-soft);
+}
+
+[data-theme=dark] .tabs>button:global(.on) {
+  background:#161a23;
+}
+
+html:global(.ur) .tabs>button {
+  line-height:1.7;
+}
+
+.tbi :global(.svg) {
+  margin-right:0;
+}
+
+.titleline {
+  background:var(--surface2);
+  color:var(--muted);
+  border-bottom:1px solid var(--line2);
+  font-size:11.5px;
+  padding:5px 14px;
+}
+
+.tabs {
+  background:var(--surface2);
+  padding:0 12px;
+  gap:4px;
+  align-items:flex-end;
+}
+
+.tabs>button {
+  padding:9px 16px;
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:.6px;
+  color:var(--muted);
+  border-radius:var(--r-md) var(--r-md) 0 0;
+  border:1px solid transparent;
+  border-bottom:0;
+  box-shadow:none;
+}
+
+.tabs>button:hover {
+  color:var(--text);
+  background:#e3e8f0;
+}
+
+.tabs>button:global(.on) {
+  background:var(--surface);
+  color:var(--ac,var(--ac-default));
+  border-color:var(--line);
+  box-shadow:inset 0 2px var(--ac,var(--ac-default));
+}
+
+.tbi {
+  position:relative;
+  display:grid;
+  place-items:center;
+  width:32px;
+  height:32px;
+  padding:0;
+  border-radius:50%;
+  border-color:transparent;
+  background:none;
+  color:var(--muted);
+  margin:4px 2px 5px;
+}
+
+.tbi:hover:not(:disabled) {
+  background:#e3e8f0;
+  color:var(--text);
+  box-shadow:none;
+  border-color:transparent;
+}
+
+.bdot {
+  position:absolute;
+  top:5px;
+  right:6px;
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:#d4463a;
+  border:2px solid var(--surface2);
+}
+
+.signout {
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  margin:4px 0 5px 6px;
+  padding:6px 12px;
+  font-weight:600;
+}
+
+[data-theme=dark] .tabs>button:hover,
+[data-theme=dark] .tbi:hover {
+  background:#262d3b;
+}
+
+[data-theme=dark] .tabs,
+[data-theme=dark] .titleline {
+  background:var(--surface);
+}

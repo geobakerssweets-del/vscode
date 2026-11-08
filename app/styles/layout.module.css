@@ -1,0 +1,99 @@
+/* layout.module.css — Application frame: root wrapper, invoice page wrapper, invoice tabs (Sales Invoice / Sales Return). */
+
+.app {
+  display:flex;
+  flex-direction:column;
+  height:100vh;
+}
+
+.body {
+  flex:1;
+  display:flex;
+  min-height:0;
+}
+
+.inv {
+  flex:1;
+  min-width:0;
+}
+
+.padd :global(.svg) {
+  margin-right:0;
+}
+
+.pospane>:global(.ptitle) {
+  margin-left:-16px;
+  margin-right:-16px;
+}
+
+.postabs {
+  display:flex;
+  align-items:flex-end;
+  gap:3px;
+  margin-top:12px!important;
+  margin-bottom:0;
+  border-bottom:1px solid var(--line);
+  padding-top:2px;
+}
+
+.ptab {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:7px 8px 7px 13px;
+  max-width:210px;
+  cursor:pointer;
+  background:var(--surface2);
+  border:1px solid var(--line);
+  border-bottom:0;
+  border-radius:9px 9px 0 0;
+  color:var(--muted);
+  font-weight:600;
+  margin-bottom:-1px;
+  transition:background var(--ease),color var(--ease);
+}
+
+.ptab span {
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.ptab:hover {
+  background:#e8edf4;
+  color:var(--text);
+}
+
+.ptab:global(.on) {
+  background:var(--surface);
+  color:var(--ac,var(--ac-default));
+  box-shadow:inset 0 2px var(--ac,var(--ac-default));
+  border-bottom:1px solid var(--surface);
+}
+
+.pdot {
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:#e08a1e;
+  flex:none;
+}
+
+.padd {
+  display:grid;
+  place-items:center;
+  width:30px;
+  height:30px;
+  padding:0;
+  border-radius:var(--r-md);
+  margin:0 0 3px 4px;
+  color:var(--ac,var(--ac-default));
+}
+
+.postabs :global(.hint) {
+  margin:0 4px 6px;
+}
+
+[data-theme=dark] .ptab:hover {
+  background:#262d3b;
+}

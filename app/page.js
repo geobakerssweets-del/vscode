@@ -1,14 +1,31 @@
 'use client';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import NumPad, { applyKey } from '@/components/NumPad';
+import cssLayout from './styles/layout.module.css';
+import cssHeader from './styles/header.module.css';
+import cssSearch from './styles/search.module.css';
+import cssRibbon from './styles/ribbon.module.css';
+import cssSidebar from './styles/sidebar.module.css';
+import cssSurfaces from './styles/surfaces.module.css';
+import cssButtons from './styles/buttons.module.css';
+import cssForms from './styles/forms.module.css';
+import cssTables from './styles/tables.module.css';
+import cssModals from './styles/modals.module.css';
+import cssReceipt from './styles/receipt.module.css';
+import cssDashboard from './styles/dashboard.module.css';
+import cssCash from './styles/cash.module.css';
+import cssSales from './styles/sales.module.css';
+import cssPurchase from './styles/purchase.module.css';
+import cssProducts from './styles/products.module.css';
+import cssReports from './styles/reports.module.css';
+import cssSettings from './styles/settings.module.css';
 const api = (u, method = 'GET', body) =>
   fetch('/api/' + u, { method, headers: { 'Content-Type': 'application/json' }, body: body && JSON.stringify(body) }).then((r) => r.json());
 const TABS = ['Sales Invoice', 'Products', 'Audit Log', 'Settings'];
 
 // ---------- language ----------
 let LANG = 'English';
-const UR = {
-  SALES: 'فروخت', PURCHASE: 'خریداری', CASH: 'کیش', ACCOUNTS: 'کھاتے', PRODUCTS: 'مصنوعات', TOOLS: 'ٹولز', HELP: 'مدد',
+const UR = { SALES: 'فروخت', PURCHASE: 'خریداری', CASH: 'کیش', ACCOUNTS: 'کھاتے', PRODUCTS: 'مصنوعات', TOOLS: 'ٹولز', HELP: 'مدد',
   Transactions: 'لین دین', Reports: 'رپورٹس', Tools: 'ٹولز', Settings: 'سیٹنگز', Help: 'مدد', Stock: 'اسٹاک', Barcodes: 'بار کوڈ', 'Basic Setup': 'بنیادی سیٹ اپ', 'Setup & Transactions': 'سیٹ اپ اور لین دین',
   'Sales Invoice': 'سیلز انوائس', 'Sales History': 'فروخت کی تاریخ', 'Sales Return': 'سیلز واپسی', 'Return History': 'واپسی کی تاریخ', 'Advance Sales': 'ایڈوانس سیل', 'Pending Entries': 'زیر التواء اندراجات',
   'Sales Report': 'سیلز رپورٹ', 'Sales Summary': 'سیلز خلاصہ', 'Stock Analysis': 'اسٹاک تجزیہ', 'Reports Center': 'رپورٹس سینٹر', Dashboard: 'ڈیش بورڈ', 'Stock Report': 'اسٹاک رپورٹ',
@@ -18,8 +35,7 @@ const UR = {
   'QUICK LAUNCH': 'فوری رسائی', 'CURRENT USER': 'موجودہ صارف', 'low stock': 'کم اسٹاک', 'Sign out': 'سائن آؤٹ',
   // receipts
   Invoice: 'انوائس', Cash_: 'نقد', Credit_: 'ادھار', Cashier: 'کیشیئر', Customer: 'گاہک', DESCRIPTION: 'تفصیل', QTY: 'مقدار', RATE: 'ریٹ', AMOUNT: 'رقم', 'Total Bill': 'کل بل', Discount: 'رعایت',
-  'Net Amount': 'خالص رقم', 'Cash Received': 'وصول شدہ نقد', 'Change to return': 'باقی واپس', 'Sales Return_': 'سیلز واپسی', 'Total Refund': 'کل واپسی رقم', 'Walk-in customer': 'عام گاہک', 'Against bill': 'بل نمبر'
-};
+  'Net Amount': 'خالص رقم', 'Cash Received': 'وصول شدہ نقد', 'Change to return': 'باقی واپس', 'Sales Return_': 'سیلز واپسی', 'Total Refund': 'کل واپسی رقم', 'Walk-in customer': 'عام گاہک', 'Against bill': 'بل نمبر' };
 const tr = (s) => (LANG === 'Urdu' && UR[s]) || s;
 const tm = (m) => (LANG === 'Urdu' ? UR[m === 'CASH' ? 'Cash_' : 'Credit_'] : m === 'CASH' ? 'Cash' : 'Credit');
 const setLang = (l) => { LANG = l === 'Urdu' ? 'Urdu' : 'English'; };
@@ -48,7 +64,7 @@ const FIXED = ['Enter', 'Escape', 'Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'A
 const DEFKEYS = Object.fromEntries(ACTIONS.map((a) => [a[0], a[5]]));
 let KEYS = { ...DEFKEYS };
 const loadKeys = (uid) => { try { KEYS = { ...DEFKEYS, ...JSON.parse(localStorage.getItem('falcon-keys-' + uid) || '{}') }; } catch { KEYS = { ...DEFKEYS }; } };
-const saveKeys = (uid, k) => { KEYS = k; try { localStorage.setItem('falcon-keys-' + uid, JSON.stringify(k)); } catch { } window.dispatchEvent(new Event('falcon-keys')); };
+const saveKeys = (uid, k) => { KEYS = k; try { localStorage.setItem('falcon-keys-' + uid, JSON.stringify(k)); } catch {} window.dispatchEvent(new Event('falcon-keys')); };
 const combo = (e) => {
   if (['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) return '';
   const k = e.key.length === 1 ? e.key.toUpperCase() : e.key === ' ' ? 'Space' : e.key;
@@ -58,21 +74,19 @@ const acts = (e) => { const c = combo(e); return c ? ACTIONS.filter((a) => KEYS[
 const clash = (id, c, keys) => { const me = ACTIONS.find((a) => a[0] === id); return ACTIONS.find((a) => a[0] !== id && keys[a[0]] === c && (a[3].includes('*') || me[3].includes('*') || a[3].some((s) => me[3].includes(s)))); };
 
 // ---------- bill template ----------
-const BT_DEFAULT = {
-  lines: 'solid', blocks: [
-    { id: 'logo', type: 'logo', show: true, size: 80, align: 'center' }, { id: 'name', type: 'name', show: true, align: 'center', big: true }, { id: 'address', type: 'address', show: true, align: 'center' },
-    { id: 'phone', type: 'phone', show: true, align: 'center' }, { id: 'd1', type: 'divider', show: true }, { id: 'title', type: 'title', show: true, align: 'center', text: 'Invoice · {mode}' },
-    { id: 'billno', type: 'billno', show: true, locked: true }, { id: 'cashier', type: 'cashier', show: true, text: 'Cashier' }, { id: 'customer', type: 'customer', show: true, text: 'Customer' },
-    { id: 'd2', type: 'divider', show: true }, { id: 'items', type: 'items', show: true, locked: true }, { id: 'd3', type: 'divider', show: true }, { id: 'totals', type: 'totals', show: true, locked: true },
-    { id: 'cash', type: 'cash', show: true, text: 'Cash Received', text2: 'Change to return' }, { id: 'd4', type: 'divider', show: true }, { id: 'footer', type: 'footer', show: true, align: 'center', text: '', big: false }]
-};
+const BT_DEFAULT = { lines: 'solid', blocks: [
+  { id: 'logo', type: 'logo', show: true, size: 80, align: 'center' }, { id: 'name', type: 'name', show: true, align: 'center', big: true }, { id: 'address', type: 'address', show: true, align: 'center' },
+  { id: 'phone', type: 'phone', show: true, align: 'center' }, { id: 'd1', type: 'divider', show: true }, { id: 'title', type: 'title', show: true, align: 'center', text: 'Invoice · {mode}' },
+  { id: 'billno', type: 'billno', show: true, locked: true }, { id: 'cashier', type: 'cashier', show: true, text: 'Cashier' }, { id: 'customer', type: 'customer', show: true, text: 'Customer' },
+  { id: 'd2', type: 'divider', show: true }, { id: 'items', type: 'items', show: true, locked: true }, { id: 'd3', type: 'divider', show: true }, { id: 'totals', type: 'totals', show: true, locked: true },
+  { id: 'cash', type: 'cash', show: true, text: 'Cash Received', text2: 'Change to return' }, { id: 'd4', type: 'divider', show: true }, { id: 'footer', type: 'footer', show: true, align: 'center', text: '', big: false } ] };
 const BT_NAMES = { logo: 'Logo', name: 'Shop name', address: 'Address', phone: 'Phone', divider: 'Divider line', title: 'Bill title', billno: 'Bill no. and date', cashier: 'Cashier', customer: 'Customer', items: 'Items', totals: 'Totals', cash: 'Cash / balance', footer: 'Footer', text: 'Text line' };
 const tplOf = (shop) => (shop?.billTemplate?.blocks?.length ? shop.billTemplate : BT_DEFAULT);
 const paperVars = (shop) => (shop?.paper === '58' ? { '--rw': '215px', '--pw': '58mm' } : { '--rw': '290px', '--pw': '80mm' });
 
 function BillBody({ pr, shop, tpl }) {
   const net = (x) => x.qty * x.rate * (1 - (x.disc || 0) / 100), hr = <hr style={{ borderTopStyle: tpl.lines === 'dotted' ? 'dotted' : 'dashed' }} />;
-  const al = (b) => ({ textAlign: b.align || 'center' }), cls = (b) => 'rc ' + (b.big ? 'big' : 'sm');
+  const al = (b) => ({ textAlign: b.align || 'center' }), cls = (b) => cssReceipt.rc + ' ' + (b.big ? 'big' : 'sm');
   const mode = tm(pr.type);
   return <>{tpl.blocks.filter((b) => b.show !== false).map((b) => {
     switch (b.type) {
@@ -82,16 +96,16 @@ function BillBody({ pr, shop, tpl }) {
       case 'phone': return <div key={b.id} className="sm" style={al(b)}>{shop.phone}</div>;
       case 'divider': return <React.Fragment key={b.id}>{hr}</React.Fragment>;
       case 'title': return <div key={b.id} className="sm" style={al(b)}>{(b.text || 'Invoice · {mode}').replace('{mode}', mode)}</div>;
-      case 'billno': return <div key={b.id} className="rl sm"><span>#{pr.billNo}</span><span>{pr.date}</span></div>;
-      case 'cashier': return <div key={b.id} className="rl sm"><span>{b.text || 'Cashier'}</span><span>{pr.cashier}</span></div>;
-      case 'customer': return <div key={b.id} className="rl sm"><span>{b.text || 'Customer'}</span><span>{/walk-in/i.test(pr.customer) ? tr('Walk-in customer') : pr.customer}</span></div>;
-      case 'items': return <div key={b.id}><div className="rl sm b"><span>{tr('DESCRIPTION')}</span><span>{tr('QTY')} · {tr('RATE')} · {tr('AMOUNT')}</span></div>
-        {pr.items.map((x, i) => <div className="rl sm" key={i}><span>{x.name}</span><span>{x.qty} · {x.rate} · {Math.round(net(x))}</span></div>)}</div>;
-      case 'totals': return <div key={b.id}><div className="rl b"><span>{tr('Total Bill')}</span><span>{Math.round(pr.subtotal)}</span></div>
-        {pr.discount > 0 && <div className="rl sm"><span>{tr('Discount')}</span><span>{Math.round(pr.discount)}</span></div>}
-        <div className="rl big"><span>{tr('Net Amount')}</span><span>Rs {Math.round(pr.total)}</span></div></div>;
-      case 'cash': return <div key={b.id}><div className="rl sm"><span>{b.text || 'Cash Received'}</span><span>{Math.round(pr.paid)}</span></div>
-        <div className="rl sm"><span>{b.text2 || 'Change to return'}</span><span>{Math.round(pr.change)}</span></div></div>;
+      case 'billno': return <div key={b.id} className={`${cssReceipt.rl} sm`}><span>#{pr.billNo}</span><span>{pr.date}</span></div>;
+      case 'cashier': return <div key={b.id} className={`${cssReceipt.rl} sm`}><span>{b.text || 'Cashier'}</span><span>{pr.cashier}</span></div>;
+      case 'customer': return <div key={b.id} className={`${cssReceipt.rl} sm`}><span>{b.text || 'Customer'}</span><span>{/walk-in/i.test(pr.customer) ? tr('Walk-in customer') : pr.customer}</span></div>;
+      case 'items': return <div key={b.id}><div className={`${cssReceipt.rl} sm b`}><span>{tr('DESCRIPTION')}</span><span>{tr('QTY')} · {tr('RATE')} · {tr('AMOUNT')}</span></div>
+        {pr.items.map((x, i) => <div className={`${cssReceipt.rl} sm`} key={i}><span>{x.name}</span><span>{x.qty} · {x.rate} · {Math.round(net(x))}</span></div>)}</div>;
+      case 'totals': return <div key={b.id}><div className={`${cssReceipt.rl} b`}><span>{tr('Total Bill')}</span><span>{Math.round(pr.subtotal)}</span></div>
+        {pr.discount > 0 && <div className={`${cssReceipt.rl} sm`}><span>{tr('Discount')}</span><span>{Math.round(pr.discount)}</span></div>}
+        <div className={`${cssReceipt.rl} big`}><span>{tr('Net Amount')}</span><span>Rs {Math.round(pr.total)}</span></div></div>;
+      case 'cash': return <div key={b.id}><div className={`${cssReceipt.rl} sm`}><span>{b.text || 'Cash Received'}</span><span>{Math.round(pr.paid)}</span></div>
+        <div className={`${cssReceipt.rl} sm`}><span>{b.text2 || 'Change to return'}</span><span>{Math.round(pr.change)}</span></div></div>;
       case 'footer': return <div key={b.id} className={cls(b)} style={al(b)}>{b.text || shop.footer}</div>;
       case 'text': return <div key={b.id} className={cls(b)} style={al(b)}>{b.text}</div>;
       default: return null;
@@ -100,7 +114,7 @@ function BillBody({ pr, shop, tpl }) {
 }
 function Receipt({ pr, shop }) {
   const tpl = tplOf(shop);
-  return <div className="receipt" style={paperVars(shop)}><BillBody pr={pr} shop={shop} tpl={tpl} /></div>;
+  return <div className={cssReceipt.receipt} style={paperVars(shop)}><BillBody pr={pr} shop={shop} tpl={tpl} /></div>;
 }
 
 const rs = (n) => 'Rs ' + Number(n || 0).toLocaleString();
@@ -185,19 +199,19 @@ function Ico({ n, s = 18, className }) {
 const ICON_OF = {};
 const RIBBON = {
   SALES: [['Transactions', [['Sales Invoice', 'cart'], ['Sales History', 'clock'], ['Sales Return', 'undo'], ['Return History', 'archive'], ['Advance Sales', 'wallet'], ['Pending Entries', 'hourglass']]],
-  ['Reports', [['Sales Report', 'bars'], ['Sales Summary', 'pie'], ['Stock Analysis', 'trend'], ['Reports Center', 'grid'], ['Dashboard', 'dash'], ['Stock Report', 'layers']]],
-  ['Tools', [['Theme Setup', 'palette'], ['Calculator', 'calc'], ['Change Password', 'key']]]],
+    ['Reports', [['Sales Report', 'bars'], ['Sales Summary', 'pie'], ['Stock Analysis', 'trend'], ['Reports Center', 'grid'], ['Dashboard', 'dash'], ['Stock Report', 'layers']]],
+    ['Tools', [['Theme Setup', 'palette'], ['Calculator', 'calc'], ['Change Password', 'key']]]],
   PURCHASE: [['Transactions', [['Purchase Invoice', 'file'], ['Purchase History', 'clip'], ['Purchase Return', 'redo'], ['Purchase Return History', 'folder']]]],
   CASH: [['Transactions', [['Cash Payment', 'payout'], ['Cash Receipt', 'payin'], ['Cash Book', 'book']]],
-  ['Reports', [['Payments Summary', 'bars'], ['Payments Details', 'doc'], ['Receipts Summary', 'pie'], ['Receipts Details', 'list']]]],
+    ['Reports', [['Payments Summary', 'bars'], ['Payments Details', 'doc'], ['Receipts Summary', 'pie'], ['Receipts Details', 'list']]]],
   ACCOUNTS: [['Setup & Transactions', [['Account Categories', 'archive'], ['Accounts Setup', 'calc'], ['Customer Setup', 'user'], ['Supplier Setup', 'truck'], ['Journal Voucher', 'pen'], ['Opening Balance', 'scale']]],
-  ['Reports', [['Account Statement', 'book'], ['Customer Ledger', 'book'], ['Supplier Ledger', 'book'], ['Chart of Accounts', 'doc']]]],
+    ['Reports', [['Account Statement', 'book'], ['Customer Ledger', 'book'], ['Supplier Ledger', 'book'], ['Chart of Accounts', 'doc']]]],
   PRODUCTS: [['Basic Setup', [['Define Products', 'box'], ['Define Manufacturer', 'factory'], ['Define Category', 'tag'], ['Update Pricing', 'dollar']]],
-  ['Reports', [['Product Catalogue', 'print'], ['Stock Report', 'layers']]],
-  ['Stock', [['Stock Adjustment', 'wrench'], ['Adjustment History', 'history'], ['Opening Stock', 'inbox']]],
-  ['Barcodes', [['Barcodes', 'barcode'], ['Other Barcodes', 'qr']]]],
+    ['Reports', [['Product Catalogue', 'print'], ['Stock Report', 'layers']]],
+    ['Stock', [['Stock Adjustment', 'wrench'], ['Adjustment History', 'history'], ['Opening Stock', 'inbox']]],
+    ['Barcodes', [['Barcodes', 'barcode'], ['Other Barcodes', 'qr']]]],
   TOOLS: [['Settings', [['Settings', 'gear'], ['Backup Data', 'db'], ['Bill Template', 'receipt'], ['Look & Feel', 'palette'], ['Users Manager', 'users'], ['Printer Settings', 'print'], ['Audit Log', 'shield'], ['Deliveries', 'truck']]],
-  ['Tools', [['Change Date', 'cal'], ['Calculator', 'calc'], ['Change Password', 'key']]]],
+    ['Tools', [['Change Date', 'cal'], ['Calculator', 'calc'], ['Change Password', 'key']]]],
   HELP: [['Help', [['Support', 'headset'], ['Updates', 'cloud'], ['Keyboard Shortcuts', 'kbd']]]],
 };
 Object.values(RIBBON).flat().forEach(([, its]) => its.forEach(([n, i]) => { ICON_OF[n] = i; }));
@@ -246,13 +260,11 @@ export default function Home() {
   const tabOf = (sc) => Object.keys(RIBBON).find((k) => RIBBON[k].some(([, it]) => it.some(([n]) => n === sc))) || tab;
   const open = (sc) => { setTab(tabOf(sc)); go(sc); setSq(''); setSres(false); searchRef.current?.blur(); };
   useEffect(() => {
-    const k = (e) => {
-      const a = acts(e);
+    const k = (e) => { const a = acts(e);
       if (a.includes('search')) { e.preventDefault(); searchRef.current?.focus(); searchRef.current?.select(); api('products').then((x) => Array.isArray(x) && setSprods(x)); }
       else if (a.includes('newSale')) { e.preventDefault(); open('Sales Invoice'); }
       else if (a.includes('newTab')) { e.preventDefault(); const kind = posKind || 'sale'; setTab('SALES'); if (!posKind) setScreen('Sales Invoice'); addTab(kind); }
-      else if (a.includes('closeTab') && posKind) { e.preventDefault(); closeTab(act[posKind]); }
-    };
+      else if (a.includes('closeTab') && posKind) { e.preventDefault(); closeTab(act[posKind]); } };
     window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k);
   });
   useEffect(() => { const f = (e) => open(e.detail); window.addEventListener('falcon-go', f); return () => window.removeEventListener('falcon-go', f); });
@@ -263,43 +275,43 @@ export default function Home() {
   const d = now ? now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-') : '';
   const wd = now ? now.toLocaleDateString('en-US', { weekday: 'long' }) : '';
   return (
-    <div className="app" style={{ '--ac': COLOURS[pref.colour] || SCREEN_COLOR[screen] || COLOR[tab] }}>
-      <div className="titleline">FALCON – | {d} | {tr(screen)} | {me.name}</div>
-      <nav className="tabs">{Object.keys(RIBBON).map((t) => <button key={t} className={t === tab ? 'on' : ''} onClick={() => setTab(t)}>{tr(t)}</button>)}
-        <span className="grow" /><div className="gsw"><Ico n="search" s={15} className="gsi" /><input ref={searchRef} className="gs" placeholder={LANG === 'Urdu' ? 'تلاش کریں…  Ctrl+K' : `Search screens and products…  ${KEYS.search}`} value={sq} onChange={(e) => { setSq(e.target.value); setSres(true); }} onFocus={() => setSres(true)} onBlur={() => setTimeout(() => setSres(false), 150)}
+    <div className={`${cssLayout.app} app`} style={{ '--ac': COLOURS[pref.colour] || SCREEN_COLOR[screen] || COLOR[tab] }}>
+      <div className={cssHeader.titleline}>FALCON – | {d} | {tr(screen)} | {me.name}</div>
+      <nav className={cssHeader.tabs}>{Object.keys(RIBBON).map((t) => <button key={t} className={t === tab ? 'on' : ''} onClick={() => setTab(t)}>{tr(t)}</button>)}
+        <span className="grow" /><div className={cssSearch.gsw}><Ico n="search" s={15} className={cssSearch.gsi} /><input ref={searchRef} className={cssSearch.gs} placeholder={LANG === 'Urdu' ? 'تلاش کریں…  Ctrl+K' : `Search screens and products…  ${KEYS.search}`} value={sq} onChange={(e) => { setSq(e.target.value); setSres(true); }} onFocus={() => setSres(true)} onBlur={() => setTimeout(() => setSres(false), 150)}
           onKeyDown={(e) => { if (e.key === 'Escape') { setSq(''); e.target.blur(); } else if (e.key === 'Enter') { if (sHits[0]) open(sHits[0]); else if (pHits[0]) open('Define Products'); } }} />
-          {sres && (sHits.length > 0 || pHits.length > 0) && <div className="sres">{sHits.map((n) => <div key={n} onMouseDown={() => open(n)}><Ico n={ICON_OF[n] || 'file'} s={15} /> {tr(n)}</div>)}{pHits.map((p) => <div key={p.id} onMouseDown={() => open('Define Products')}><Ico n="box" s={15} /> {p.name} <small>stock {p.stock}</small></div>)}</div>}</div><button className="tbi" title="Language" aria-label="Language" onClick={() => { const q = getPrefs(); savePrefs({ ...q, lang: q.lang === 'Urdu' ? 'English' : 'Urdu' }); }}><Ico n="lang" s={17} /></button>
-        <button className="tbi" title="Light / dark" aria-label="Light or dark theme" onClick={() => { const q = getPrefs(); savePrefs({ ...q, theme: document.documentElement.dataset.theme === 'dark' ? 'Light' : 'Dark' }); }}><Ico n="moon" s={17} /></button>
-        <button className="tbi" title="Low stock" aria-label="Low stock" onClick={() => go('Define Products')}><Ico n="bell" s={17} />{low > 0 && <i className="bdot" />}</button>
-        <button className="signout" onClick={async () => { await api('auth/logout', 'POST'); window.location.href = '/login'; }}><Ico n="out" s={16} /> {tr('Sign out')}</button></nav>
-      <div className="ribbon">{RIBBON[tab].map(([g, items]) => <div className="grp" key={g}>
-        <div className="items">{items.map(([n, i]) => <button key={n} className={'rb' + (n === screen ? ' on' : '')} onClick={() => go(n)}><span className="ic" style={{ '--tn': toneOf(n) }}><Ico n={i} s={20} />{n === 'Pending Entries' && pendN > 0 && <i className="rbadge">{pendN}</i>}</span>{tr(n)}</button>)}</div><small>{tr(g)}</small></div>)}</div>
-      <div className="datebar" style={{ background: COLOURS[pref.colour] || SCREEN_COLOR[screen] || COLOR[tab] }}>{d}, {wd}</div>
-      <div className="body">
-        <aside><div className="ql">{tr('QUICK LAUNCH')}</div>{QUICK.map((q) => <button key={q} className={q === screen ? 'on' : ''} onClick={() => go(q)}><Ico n={ICON_OF[q] || 'dot'} s={16} /><span>{tr(q)}</span></button>)}
+          {sres && (sHits.length > 0 || pHits.length > 0) && <div className={cssSearch.sres}>{sHits.map((n) => <div key={n} onMouseDown={() => open(n)}><Ico n={ICON_OF[n] || 'file'} s={15} /> {tr(n)}</div>)}{pHits.map((p) => <div key={p.id} onMouseDown={() => open('Define Products')}><Ico n="box" s={15} /> {p.name} <small>stock {p.stock}</small></div>)}</div>}</div><button className={cssHeader.tbi} title="Language" aria-label="Language" onClick={() => { const q = getPrefs(); savePrefs({ ...q, lang: q.lang === 'Urdu' ? 'English' : 'Urdu' }); }}><Ico n="lang" s={17} /></button>
+        <button className={cssHeader.tbi} title="Light / dark" aria-label="Light or dark theme" onClick={() => { const q = getPrefs(); savePrefs({ ...q, theme: document.documentElement.dataset.theme === 'dark' ? 'Light' : 'Dark' }); }}><Ico n="moon" s={17} /></button>
+        <button className={cssHeader.tbi} title="Low stock" aria-label="Low stock" onClick={() => go('Define Products')}><Ico n="bell" s={17} />{low > 0 && <i className={cssHeader.bdot} />}</button>
+        <button className={cssHeader.signout} onClick={async () => { await api('auth/logout', 'POST'); window.location.href = '/login'; }}><Ico n="out" s={16} /> {tr('Sign out')}</button></nav>
+      <div className={cssRibbon.ribbon}>{RIBBON[tab].map(([g, items]) => <div className={cssRibbon.grp} key={g}>
+        <div className={cssRibbon.items}>{items.map(([n, i]) => <button key={n} className={cssRibbon.rb + (n === screen ? ' on' : '')} onClick={() => go(n)}><span className={cssRibbon.ic} style={{ '--tn': toneOf(n) }}><Ico n={i} s={20} />{n === 'Pending Entries' && pendN > 0 && <i className={cssRibbon.rbadge}>{pendN}</i>}</span>{tr(n)}</button>)}</div><small>{tr(g)}</small></div>)}</div>
+      <div className={cssRibbon.datebar} style={{ background: COLOURS[pref.colour] || SCREEN_COLOR[screen] || COLOR[tab] }}>{d}, {wd}</div>
+      <div className={cssLayout.body}>
+        <aside><div className={cssSidebar.ql}>{tr('QUICK LAUNCH')}</div>{QUICK.map((q) => <button key={q} className={q === screen ? 'on' : ''} onClick={() => go(q)}><Ico n={ICON_OF[q] || 'dot'} s={16} /><span>{tr(q)}</span></button>)}
           <div className="grow" />
-          <div className="prep"><button className="prepH" onClick={() => setPrepOpen(!prepOpen)} aria-expanded={prepOpen}><Ico n={prepOpen ? 'chevd' : 'chevr'} s={13} /> ORDER PREP</button>
-            {prepOpen && <p>{low > 0 ? <>{low.toLocaleString()} items are at or below their minimum stock. <button className="lnk" onClick={() => go('Purchase Invoice')}>Open Purchase Invoice</button> to restock.</> : 'No supplier due in the next 3 days, and nothing to order.'}</p>}</div>
+          <div className={cssSidebar.prep}><button className={cssSidebar.prepH} onClick={() => setPrepOpen(!prepOpen)} aria-expanded={prepOpen}><Ico n={prepOpen ? 'chevd' : 'chevr'} s={13} /> ORDER PREP</button>
+            {prepOpen && <p>{low > 0 ? <>{low.toLocaleString()} items are at or below their minimum stock. <button className={cssButtons.lnk} onClick={() => go('Purchase Invoice')}>Open Purchase Invoice</button> to restock.</> : 'No supplier due in the next 3 days, and nothing to order.'}</p>}</div>
           <button className={screen === 'Settings' ? 'on' : ''} onClick={() => go('Settings')}><Ico n="gear" s={16} /><span>{tr('Settings')}</span></button>
           <button className={screen === 'Updates' ? 'on' : ''} onClick={() => go('Updates')}><Ico n="cloud" s={16} /><span>{tr('Updates')}</span></button></aside>
         <section>{screen !== 'Sales Invoice' && screen !== 'Sales Return' && !['Purchase Invoice', 'Purchase Return', 'Cash Payment', 'Cash Receipt'].includes(screen) && <h2 className="ptitle">{screen === 'Dashboard' ? `${!now ? 'Hello' : now.getHours() < 12 ? 'Good morning' : now.getHours() < 17 ? 'Good afternoon' : 'Good evening'}, ${me.name || ''}` : tr(screen)}</h2>}
-          {posKind && <div className="postabs" role="tablist">{tabs.filter((x) => x.kind === posKind).map((x) => <div key={x.id} role="tab" aria-selected={act[posKind] === x.id} tabIndex="0" className={'ptab' + (act[posKind] === x.id ? ' on' : '')} onClick={() => setAct((s) => ({ ...s, [posKind]: x.id }))} onKeyDown={(e) => e.key === 'Enter' && setAct((s) => ({ ...s, [posKind]: x.id }))}>
-            <Ico n={posKind === 'sale' ? 'cart' : 'undo'} s={14} /><span>{tabName(x)}</span>{dirty[x.id] && <i className="pdot" title="Has items that are not saved" />}
-            <button className="px" title={`Close tab (${KEYS.closeTab})`} aria-label="Close tab" onClick={(e) => { e.stopPropagation(); closeTab(x.id); }}><Ico n="x" s={12} /></button></div>)}
-            <button className="padd" title={`New tab (${KEYS.newTab})`} aria-label="New tab" onClick={() => addTab(posKind)}><Ico n="plus" s={15} /></button><span className="grow" />
-            <small className="hint"><kbd>{KEYS.newTab}</kbd> new tab · <kbd>{KEYS.closeTab}</kbd> close tab{keepTabs ? ' · tabs stay open while you visit other screens' : ''}</small></div>}
+          {posKind && <div className={cssLayout.postabs} role="tablist">{tabs.filter((x) => x.kind === posKind).map((x) => <div key={x.id} role="tab" aria-selected={act[posKind] === x.id} tabIndex="0" className={cssLayout.ptab + (act[posKind] === x.id ? ' on' : '')} onClick={() => setAct((s) => ({ ...s, [posKind]: x.id }))} onKeyDown={(e) => e.key === 'Enter' && setAct((s) => ({ ...s, [posKind]: x.id }))}>
+            <Ico n={posKind === 'sale' ? 'cart' : 'undo'} s={14} /><span>{tabName(x)}</span>{dirty[x.id] && <i className={cssLayout.pdot} title="Has items that are not saved" />}
+            <button className={cssButtons.px} title={`Close tab (${KEYS.closeTab})`} aria-label="Close tab" onClick={(e) => { e.stopPropagation(); closeTab(x.id); }}><Ico n="x" s={12} /></button></div>)}
+          <button className={cssLayout.padd} title={`New tab (${KEYS.newTab})`} aria-label="New tab" onClick={() => addTab(posKind)}><Ico n="plus" s={15} /></button><span className="grow" />
+          <small className="hint"><kbd>{KEYS.newTab}</kbd> new tab · <kbd>{KEYS.closeTab}</kbd> close tab{keepTabs ? ' · tabs stay open while you visit other screens' : ''}</small></div>}
           {['sale', 'ret'].map((kind) => (keepTabs || posKind === kind) && tabs.filter((x) => x.kind === kind).map((x) => {
             const vis = posKind === kind && act[kind] === x.id, od = (v) => setDirty((d) => (d[x.id] === v ? d : { ...d, [x.id]: v }));
-            return <div key={x.id} className="pospane" style={{ display: vis ? 'block' : 'none', width: kind === 'sale' ? `calc(${pref.width}% - 32px)` : undefined }}>
+            return <div key={x.id} className={cssLayout.pospane} style={{ display: vis ? 'block' : 'none', width: kind === 'sale' ? `calc(${pref.width}% - 32px)` : undefined }}>
               {kind === 'sale' ? <Sales edit={x.edit} resume={x.resume} active={vis} onDirty={od} onFinish={() => { closeTab(x.id, true); setScreen('Sales History'); }} />
                 : <SalesReturn active={vis} onDirty={od} onClose={() => go('Dashboard')} />}</div>;
           }))}
           {!posKind && (View ? <View go={go} me={me} onPending={() => go('Pending Entries')} onResume={(b) => { setTab('SALES'); addTab('sale', { resume: b }); setScreen('Sales Invoice'); }} onEdit={(b) => { setTab('SALES'); addTab('sale', { edit: b }); setScreen('Sales Invoice'); }} onClose={() => go('Sales Invoice')} /> : <p className="soon">{tr(screen)} isn’t built yet.</p>)}
         </section>
       </div>
-      {pwOpen && <div className="modal" onClick={() => setPwOpen(false)}><div className="mbox" style={{ width: 400 }} role="dialog" aria-modal="true" aria-label="Change password" onClick={(e) => e.stopPropagation()}>
-        <div className="mhead"><b>Change password</b><button className="px" aria-label="Close" onClick={() => setPwOpen(false)}><Ico n="x" s={14} /></button></div><ChangePassword onClose={() => setPwOpen(false)} /></div></div>}
-      <footer>{tr('CURRENT USER')} : {(me.name || '').toUpperCase()} <i>({me.role})</i><span className="low"><Ico n="warn" s={13} /> {low} {tr('low stock')}</span></footer>
+      {pwOpen && <div className={cssModals.modal} onClick={() => setPwOpen(false)}><div className={cssModals.mbox} style={{ width: 400 }} role="dialog" aria-modal="true" aria-label="Change password" onClick={(e) => e.stopPropagation()}>
+        <div className={`${cssModals.mhead} mhead`}><b>Change password</b><button className={cssButtons.px} aria-label="Close" onClick={() => setPwOpen(false)}><Ico n="x" s={14} /></button></div><ChangePassword onClose={() => setPwOpen(false)} /></div></div>}
+      <footer>{tr('CURRENT USER')} : {(me.name || '').toUpperCase()} <i>({me.role})</i><span className={cssSidebar.low}><Ico n="warn" s={13} /> {low} {tr('low stock')}</span></footer>
     </div>
   );
 }
@@ -377,10 +389,8 @@ function Sales({ edit, resume, onFinish, active = true, onDirty }) {
       if (!active) return;
       if (e.ctrlKey && ['-', '=', '+'].includes(e.key)) { e.preventDefault(); setZ((v) => Math.min(125, Math.max(70, v + (e.key === '-' ? -10 : 10)))); return; }
       if (e.key === 'Escape') setCat(false);
-      const m = {
-        barcode: () => codeRef.current?.focus(), catalogue: () => setCat(true), clear, toggleType: () => setType((t) => (t === 'CASH' ? 'CREDIT' : 'CASH')),
-        customer: () => custRef.current?.focus(), hold: () => hold(false), cashRecv: () => cashRef.current?.focus(), save: () => save(false), savePrint: () => save(true)
-      };
+      const m = { barcode: () => codeRef.current?.focus(), catalogue: () => setCat(true), clear, toggleType: () => setType((t) => (t === 'CASH' ? 'CREDIT' : 'CASH')),
+        customer: () => custRef.current?.focus(), hold: () => hold(false), cashRecv: () => cashRef.current?.focus(), save: () => save(false), savePrint: () => save(true) };
       const id = acts(e).find((x) => m[x]); if (id) { e.preventDefault(); m[id](); }
     };
     window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k);
@@ -389,15 +399,15 @@ function Sales({ edit, resume, onFinish, active = true, onDirty }) {
 
   return <>
     <h2 className="ptitle">{edit ? `Sales Invoice · Changing ${edit.billNo}` : `Sales Invoice No. ${no}`}</h2>
-    <div className="inv" style={{ zoom: z / 100 }}>
+    <div className={cssLayout.inv} style={{ zoom: z / 100 }}>
       <p className="hint"><kbd>{KEYS.barcode}</kbd> barcode · <kbd>{KEYS.catalogue}</kbd> catalogue · <kbd>{KEYS.toggleType}</kbd> cash/credit · <kbd>{KEYS.customer}</kbd> customer · <kbd>{KEYS.cashRecv}</kbd> cash received · <kbd>{KEYS.save}</kbd> save · <kbd>{KEYS.savePrint}</kbd> save & print · <kbd>Ctrl -/+</kbd> size ({z}%)</p>
-      <div className="hdr">
-        <div className="fl"><label>Sale (F5)</label><button className={'typebtn ' + type} onClick={() => setType(type === 'CASH' ? 'CREDIT' : 'CASH')}>{type}<small>click or F5 to switch</small></button></div>
-        <div className="fl"><label>Date</label><input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></div>
-        <div className="fl"><label>Customer (F6)</label><input ref={custRef} title="Name printed on the receipt (not saved to the customer list)" placeholder="Walk-in Customer" value={cust} onChange={(e) => setCust(e.target.value)} /></div>
-        <div className="fl"><label>Remarks</label><input value={remarks} onChange={(e) => setRemarks(e.target.value)} /></div>
+      <div className={cssSales.hdr}>
+        <div className={cssSales.fl}><label>Sale (F5)</label><button className={`${cssButtons.typebtn} ` + type} onClick={() => setType(type === 'CASH' ? 'CREDIT' : 'CASH')}>{type}<small>click or F5 to switch</small></button></div>
+        <div className={cssSales.fl}><label>Date</label><input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></div>
+        <div className={cssSales.fl}><label>Customer (F6)</label><input ref={custRef} title="Name printed on the receipt (not saved to the customer list)" placeholder="Walk-in Customer" value={cust} onChange={(e) => setCust(e.target.value)} /></div>
+        <div className={cssSales.fl}><label>Remarks</label><input value={remarks} onChange={(e) => setRemarks(e.target.value)} /></div>
       </div>
-      <div className="entry">
+      <div className={cssSales.entry}>
         {col('ID / BARCODE (F2)', <input ref={codeRef} placeholder="Scan or ID" value={code} onChange={(e) => setCode(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && scan()} />, 150)}
         {col('PRODUCT NAME', <>
           <input placeholder="Type the product name" value={name} onChange={(e) => { setName(e.target.value); setSel(null); setHi(0); }} onKeyDown={(e) => {
@@ -407,8 +417,8 @@ function Sales({ edit, resume, onFinish, active = true, onDirty }) {
             else if (e.key === 'Enter') { e.preventDefault(); pick(hits[Math.min(hi, hits.length - 1)]); }
             else if (e.key === 'Escape') { e.stopPropagation(); setName(''); }
           }} />
-          {hits.length > 0 && <div className="drop">{hits.map((p, n) => <div key={p.id} className={'hit' + (n === hi ? ' on' : '')} onMouseEnter={() => setHi(n)} onClick={() => pick(p)}>{p.name} — {rs(p.salePrice)} <small>stock {p.stock} {p.unit}</small></div>)}</div>}</>)}
-        <button className="cat" onClick={() => setCat(true)}><Ico n="box" s={15} /> Catalogue (F3)</button>
+          {hits.length > 0 && <div className={cssSales.drop}>{hits.map((p, n) => <div key={p.id} className={cssModals.hit + (n === hi ? ' on' : '')} onMouseEnter={() => setHi(n)} onClick={() => pick(p)}>{p.name} — {rs(p.salePrice)} <small>stock {p.stock} {p.unit}</small></div>)}</div>}</>)}
+        <button className={cssModals.cat} onClick={() => setCat(true)}><Ico n="box" s={15} /> Catalogue (F3)</button>
         {col('QTY', <input ref={qtyRef} type="number" min="0" value={qty} onChange={(e) => setQty(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && sel && addLine(sel)} />, 70)}
         {col('PRICE', <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && sel && addLine(sel)} />, 100)}
         {col('DISC. %', <input type="number" value={disc} onChange={(e) => setDisc(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && sel && addLine(sel)} />, 70)}
@@ -421,15 +431,15 @@ function Sales({ edit, resume, onFinish, active = true, onDirty }) {
             <td><input type="checkbox" checked={x.taken !== false} title="Taken now" onChange={() => setCart(cart.map((y, j) => j === i ? { ...y, taken: y.taken === false } : y))} /></td>
             {['qty', 'rate', 'disc'].map((k) => <td key={k} className="num"><input type="number" min="0" value={x[k]} style={{ width: 80, textAlign: 'right' }} onChange={(e) => setCart(cart.map((y, j) => (j === i ? { ...y, [k]: +e.target.value } : y)))} /></td>)}<td className="num">{rs(net(x))}</td>
             <td><button onClick={() => setCart(cart.filter((_, j) => j !== i))}>✕</button></td></tr>)}</tbody></table>
-      <div className="status"><span>{cart.length} lines · {units} units</span>
-        {last && <span>✔ Last: <b>{last.billNo}</b> · {rs(last.total)} · change {rs(last.change)} <button className="lnk" onClick={() => doPrint(last)}><Ico n="print" s={15} /> Reprint</button></span>}</div>
-      <div className="bottom">
-        <div className="bl">
+      <div className={cssTables.status}><span>{cart.length} lines · {units} units</span>
+        {last && <span>✔ Last: <b>{last.billNo}</b> · {rs(last.total)} · change {rs(last.change)} <button className={cssButtons.lnk} onClick={() => doPrint(last)}><Ico n="print" s={15} /> Reprint</button></span>}</div>
+      <div className={cssSales.bottom}>
+        <div className={cssSales.bl}>
           <div><span>Prev. Balance</span><i>{rs(prev)}</i></div><div><span>This Bill</span><i>{rs(total)}</i></div>
           <div><span>Payable</span><i>{rs(prev + total)}</i></div>
           <div><span>Change</span><i className="g">{rs(change)}</i></div><div><span>Profit</span><i className="g">{rs(total - cost)}</i></div>
         </div>
-        <div className="br">
+        <div className={cssSales.br}>
           <div><span>TOTAL BILL</span><i>{rs(sub)}</i></div>
           <div><span className="red">DISC-1 Rs</span><input type="number" value={d1} placeholder="0.00" onChange={(e) => setD1(e.target.value)} />
             <span className="red">DISC-2 %</span><input type="number" value={d2} placeholder="0" onChange={(e) => setD2(e.target.value)} /><i>{rs(a2)}</i></div>
@@ -437,13 +447,13 @@ function Sales({ edit, resume, onFinish, active = true, onDirty }) {
           <div><span className="red">CASH RECEIVED (F7)</span><input ref={cashRef} type="number" value={paid} placeholder="Blank = exact" onChange={(e) => setPaid(e.target.value)} /></div>
         </div>
       </div>
-      <div className="btns"><button onClick={clear}>Clear (F4)</button><button disabled={!cart.length || !!edit} onClick={() => hold(false)}>Hold (F8)</button><button onClick={() => save(true)}><Ico n="print" s={15} /> Save & Print (F10)</button><button className="pri" onClick={() => save(false)}>{edit ? 'Update (F9)' : 'Save (F9)'}</button>{edit && <button onClick={onFinish}>Close</button>}</div>
+      <div className={cssButtons.btns}><button onClick={clear}>Clear (F4)</button><button disabled={!cart.length || !!edit} onClick={() => hold(false)}>Hold (F8)</button><button onClick={() => save(true)}><Ico n="print" s={15} /> Save & Print (F10)</button><button className="pri" onClick={() => save(false)}>{edit ? 'Update (F9)' : 'Save (F9)'}</button>{edit && <button onClick={onFinish}>Close</button>}</div>
       {msg && <p className="ok">{msg}</p>}
     </div>
     {ask && <Ask title={ask.title} err={askErr} onCancel={() => { setAsk(null); setAskErr(''); }} onOk={async (pw) => { const r = await ask.run(pw); if (r.error) setAskErr(r.error); else { setAsk(null); onFinish(); } }} />}
-    {cat && <div className="modal" onClick={() => setCat(false)}><div className="mbox" onClick={(e) => e.stopPropagation()}>
+    {cat && <div className={cssModals.modal} onClick={() => setCat(false)}><div className={cssModals.mbox} onClick={(e) => e.stopPropagation()}>
       <b>Product Catalogue</b><input autoFocus placeholder="Search products" value={cq} onChange={(e) => setCq(e.target.value)} />
-      <div className="mlist">{prods.filter((p) => p.active !== false && p.name.toLowerCase().includes(cq.toLowerCase())).map((p) => <div key={p.id} className="hit" onClick={() => { pick(p); setCat(false); setCq(''); }}>{p.name} — {rs(p.salePrice)} <small>stock {p.stock} {p.unit}</small></div>)}</div></div></div>}
+      <div className={cssModals.mlist}>{prods.filter((p) => p.active !== false && p.name.toLowerCase().includes(cq.toLowerCase())).map((p) => <div key={p.id} className={cssModals.hit} onClick={() => { pick(p); setCat(false); setCq(''); }}>{p.name} — {rs(p.salePrice)} <small>stock {p.stock} {p.unit}</small></div>)}</div></div></div>}
     {pr && <Receipt pr={pr} shop={shop} />}
   </>;
 }
@@ -451,14 +461,14 @@ function Sales({ edit, resume, onFinish, active = true, onDirty }) {
 function Ask({ title, needReason, err, onCancel, onOk }) {
   const [pw, setPw] = useState(''), [why, setWhy] = useState('');
   const ready = pw && (!needReason || why.trim());
-  return <div className="modal" style={{ zIndex: 30 }} onClick={onCancel}><div className="mbox" onClick={(e) => e.stopPropagation()}>
+  return <div className={cssModals.modal} style={{ zIndex: 30 }} onClick={onCancel}><div className={cssModals.mbox} onClick={(e) => e.stopPropagation()}>
     <b>{title}</b>
     {needReason && <><label>Reason</label><input autoFocus value={why} onChange={(e) => setWhy(e.target.value)} placeholder="Why is this bill being voided?" /></>}
     <label>Admin password</label>
     <input type="password" autoFocus={!needReason} value={pw} onChange={(e) => setPw(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && ready && onOk(pw, why.trim())} />
     <NumPad onKey={(k) => setPw((v) => applyKey(v, k, 32))} />
     {err && <p style={{ color: '#b91c1c', margin: 0 }}>{err}</p>}
-    <div className="btns"><button onClick={onCancel}>Cancel</button><button className="pri" disabled={!ready} onClick={() => onOk(pw, why.trim())}>Confirm</button></div>
+    <div className={cssButtons.btns}><button onClick={onCancel}>Cancel</button><button className="pri" disabled={!ready} onClick={() => onOk(pw, why.trim())}>Confirm</button></div>
   </div></div>;
 }
 
@@ -469,20 +479,20 @@ const SORTS = { 'Newest first': (a, b) => b.createdAt.localeCompare(a.createdAt)
 const REASONS = ['Changed mind', 'Damaged', 'Expired', 'Wrong item', 'Other'];
 function ReturnReceipt({ pr, shop }) {
   const net = (x) => x.qty * x.rate * (1 - (x.disc || 0) / 100);
-  return <div className="receipt" style={paperVars(shop)}>
-    {shop.logo && <div className="rc"><img src={shop.logo} alt="" style={{ width: '70%' }} /></div>}
-    <div className="rc big">{shop.name}</div><div className="rc sm">{shop.address}<br />{shop.phone}</div><hr />
-    <div className="rc sm">{tr('Sales Return_')} · {pr.type === 'CASH' ? 'Cash refund' : 'Credit to account'}</div>
-    <div className="rl sm"><span>#{pr.returnNo}</span><span>{pr.date}</span></div>
-    {pr.billNo && <div className="rl sm"><span>{tr('Against bill')}</span><span>{pr.billNo}</span></div>}
-    <div className="rl sm"><span>{tr('Cashier')}</span><span>{pr.cashier}</span></div>
-    <div className="rl sm"><span>{tr('Customer')}</span><span>{/walk-in/i.test(pr.customer) ? tr('Walk-in customer') : pr.customer}</span></div><hr />
-    <div className="rl sm b"><span>{tr('DESCRIPTION')}</span><span>{tr('QTY')} · {tr('RATE')} · {tr('AMOUNT')}</span></div>
-    {pr.items.map((x, i) => <div className="rl sm" key={i}><span>{x.name}</span><span>{x.qty} · {x.rate} · {Math.round(net(x))}</span></div>)}<hr />
-    <div className="rl b"><span>{tr('Total Bill')}</span><span>{Math.round(pr.subtotal ?? pr.total)}</span></div>
-    {pr.discount > 0 && <div className="rl sm"><span>{tr('Discount')}</span><span>{Math.round(pr.discount)}</span></div>}
-    <div className="rl big"><span>{tr('Total Refund')}</span><span>Rs {Math.round(pr.total)}</span></div><hr />
-    <div className="rc sm">{shop.footer}</div>
+  return <div className={cssReceipt.receipt} style={paperVars(shop)}>
+    {shop.logo && <div className={cssReceipt.rc}><img src={shop.logo} alt="" style={{ width: '70%' }} /></div>}
+    <div className={`${cssReceipt.rc} big`}>{shop.name}</div><div className={`${cssReceipt.rc} sm`}>{shop.address}<br />{shop.phone}</div><hr />
+    <div className={`${cssReceipt.rc} sm`}>{tr('Sales Return_')} · {pr.type === 'CASH' ? 'Cash refund' : 'Credit to account'}</div>
+    <div className={`${cssReceipt.rl} sm`}><span>#{pr.returnNo}</span><span>{pr.date}</span></div>
+    {pr.billNo && <div className={`${cssReceipt.rl} sm`}><span>{tr('Against bill')}</span><span>{pr.billNo}</span></div>}
+    <div className={`${cssReceipt.rl} sm`}><span>{tr('Cashier')}</span><span>{pr.cashier}</span></div>
+    <div className={`${cssReceipt.rl} sm`}><span>{tr('Customer')}</span><span>{/walk-in/i.test(pr.customer) ? tr('Walk-in customer') : pr.customer}</span></div><hr />
+    <div className={`${cssReceipt.rl} sm b`}><span>{tr('DESCRIPTION')}</span><span>{tr('QTY')} · {tr('RATE')} · {tr('AMOUNT')}</span></div>
+    {pr.items.map((x, i) => <div className={`${cssReceipt.rl} sm`} key={i}><span>{x.name}</span><span>{x.qty} · {x.rate} · {Math.round(net(x))}</span></div>)}<hr />
+    <div className={`${cssReceipt.rl} b`}><span>{tr('Total Bill')}</span><span>{Math.round(pr.subtotal ?? pr.total)}</span></div>
+    {pr.discount > 0 && <div className={`${cssReceipt.rl} sm`}><span>{tr('Discount')}</span><span>{Math.round(pr.discount)}</span></div>}
+    <div className={`${cssReceipt.rl} big`}><span>{tr('Total Refund')}</span><span>Rs {Math.round(pr.total)}</span></div><hr />
+    <div className={`${cssReceipt.rc} sm`}>{shop.footer}</div>
   </div>;
 }
 
@@ -579,7 +589,7 @@ function SalesReturn({ onClose, active = true, onDirty }) {
     if (e.key === 'ArrowDown') { e.preventDefault(); setRow((r) => Math.min(r + 1, lines.length - 1)); }
     else if (e.key === 'ArrowUp') { e.preventDefault(); if (row <= 0) { setRow(-1); codeRef.current?.focus(); } else setRow(row - 1); }
     else if (e.key === 'Enter' && row >= 0) { e.preventDefault(); edit(row); }
-    else if (e.key === 'ArrowRight' && row >= 0) { e.preventDefault(); document.querySelector('.rlines tr.sel select')?.focus(); }
+    else if (e.key === 'ArrowRight' && row >= 0) { e.preventDefault(); listRef.current?.querySelector('tr.sel select')?.focus(); }
     else if (e.key === 'Delete' && row >= 0) { e.preventDefault(); remove(row); }
   };
   useEffect(() => {
@@ -596,19 +606,19 @@ function SalesReturn({ onClose, active = true, onDirty }) {
 
   return <>
     <h2 className="ptitle">Sales Return No. {no}</h2>
-    <div className="inv">
+    <div className={cssLayout.inv}>
       <p className="hint"><kbd>↑↓</kbd> move · <kbd>Enter</kbd> change an item · <kbd>→</kbd> reason · <kbd>Del</kbd> remove · <kbd>F9</kbd> save · stock goes back in, money goes back out</p>
-      <div className="hdr">
-        <div className="fl"><label>Return (F5)</label><button className="typebtn CASH rt" title="CASH: money is handed back. CREDIT: the amount is taken off the customer's account." onClick={() => setType(type === 'CASH' ? 'CREDIT' : 'CASH')}>{type}<small>click or F5 to switch</small></button></div>
-        <div className="fl"><label>Date</label><input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></div>
-        <div className="fl"><label>Customer (F6)</label><input ref={custRef} placeholder="Walk-in Customer" value={cust} onChange={(e) => setCust(e.target.value)} /></div>
-        <div className="fl"><label>Remarks</label><input value={remarks} onChange={(e) => setRemarks(e.target.value)} /></div>
-        <div className="fl wide"><label>Sales Inv #</label>
-          <input className="billin" placeholder={`Optional: ${till}-00042 or 42`} value={billNo} onChange={(e) => { setBillNo(e.target.value); if (!e.target.value) { setBill(null); setD1(''); setD2(''); } }} onKeyDown={(e) => e.key === 'Enter' && findBill()} />
-          <button className="rsearch" aria-label="Find bill" title="Find bill" onClick={findBill}>🔍</button>
+      <div className={cssSales.hdr}>
+        <div className={cssSales.fl}><label>Return (F5)</label><button className={`${cssButtons.typebtn} CASH ${cssTables.rt} rt`} title="CASH: money is handed back. CREDIT: the amount is taken off the customer's account." onClick={() => setType(type === 'CASH' ? 'CREDIT' : 'CASH')}>{type}<small>click or F5 to switch</small></button></div>
+        <div className={cssSales.fl}><label>Date</label><input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></div>
+        <div className={cssSales.fl}><label>Customer (F6)</label><input ref={custRef} placeholder="Walk-in Customer" value={cust} onChange={(e) => setCust(e.target.value)} /></div>
+        <div className={cssSales.fl}><label>Remarks</label><input value={remarks} onChange={(e) => setRemarks(e.target.value)} /></div>
+        <div className={`${cssSales.fl} wide`}><label>Sales Inv #</label>
+          <input className={cssSales.billin} placeholder={`Optional: ${till}-00042 or 42`} value={billNo} onChange={(e) => { setBillNo(e.target.value); if (!e.target.value) { setBill(null); setD1(''); setD2(''); } }} onKeyDown={(e) => e.key === 'Enter' && findBill()} />
+          <button className={cssSearch.rsearch} aria-label="Find bill" title="Find bill" onClick={findBill}>🔍</button>
           <span className="hint">{bill ? <>Checking items against <b>{bill.billNo}</b> · {bill.customer} · {rs2(bill.total)}</> : 'Optional. With the bill number, items are checked against that bill.'}</span></div>
       </div>
-      <div className="entry">
+      <div className={cssSales.entry}>
         {col('ID / BARCODE (F2)', <input ref={codeRef} className="mono" placeholder="Scan or ID" value={code} onChange={(e) => setCode(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && scan()} />, 150)}
         {col('PRODUCT NAME', <>
           <input placeholder="Type the product name" value={name} onChange={(e) => { setName(e.target.value); setSel(null); setHi(0); }} onKeyDown={(e) => {
@@ -618,43 +628,41 @@ function SalesReturn({ onClose, active = true, onDirty }) {
             else if (e.key === 'Enter') { e.preventDefault(); pick(hits[Math.min(hi, hits.length - 1)]); }
             else if (e.key === 'Escape') { e.stopPropagation(); setName(''); }
           }} />
-          {hits.length > 0 && <div className="drop">{hits.map((p, n) => <div key={p.productId} className={'hit' + (n === hi ? ' on' : '')} onMouseEnter={() => setHi(n)} onClick={() => pick(p)}>{p.name} — {rs(p.price)} <small>{info(p)}</small></div>)}</div>}</>)}
-        <button className="cat" onClick={() => setCat(true)}><Ico n="box" s={15} /> Catalogue (F3)</button>
+          {hits.length > 0 && <div className={cssSales.drop}>{hits.map((p, n) => <div key={p.productId} className={cssModals.hit + (n === hi ? ' on' : '')} onMouseEnter={() => setHi(n)} onClick={() => pick(p)}>{p.name} — {rs(p.price)} <small>{info(p)}</small></div>)}</div>}</>)}
+        <button className={cssModals.cat} onClick={() => setCat(true)}><Ico n="box" s={15} /> Catalogue (F3)</button>
         {col('QTY', <input ref={qtyRef} type="number" min="0" value={qty} onChange={(e) => setQty(e.target.value)} onKeyDown={go} />, 70)}
-        {col('PRICE', <div className="pfx"><span>Rs</span><input type="number" value={price} onChange={(e) => setPrice(e.target.value)} onKeyDown={go} /></div>, 110)}
-        {col('DISC. %', <div className="pfx sfx"><input type="number" value={disc} onChange={(e) => setDisc(e.target.value)} onKeyDown={go} /><span>%</span></div>, 80)}
+        {col('PRICE', <div className={cssSales.pfx}><span>Rs</span><input type="number" value={price} onChange={(e) => setPrice(e.target.value)} onKeyDown={go} /></div>, 110)}
+        {col('DISC. %', <div className={`${cssSales.pfx} ${cssSales.sfx}`}><input type="number" value={disc} onChange={(e) => setDisc(e.target.value)} onKeyDown={go} /><span>%</span></div>, 80)}
         {col('NET VALUE', <input readOnly value={rs2(qty * price * (1 - disc / 100))} />, 120)}
         <button className="pri" disabled={!sel} onClick={() => addLine(sel)}>{editAt != null ? 'Update' : 'Add'}</button>
       </div>
-      <div className="rlines" tabIndex={0} ref={listRef} onKeyDown={listKey}>
-        <table style={{ width: '100%' }}><thead><tr><th>#</th><th>DESCRIPTION</th><th className="num">QTY</th><th className="num">PRICE</th><th className="num">DISC%</th><th className="num">AMOUNT</th><th>REASON</th><th></th></tr></thead>
+      <table className={cssSales.rlist} style={{ width: '100%' }} tabIndex={0} ref={listRef} onKeyDown={listKey}><thead><tr><th>#</th><th>DESCRIPTION</th><th className="num">QTY</th><th className="num">PRICE</th><th className="num">DISC%</th><th className="num">AMOUNT</th><th>REASON</th><th></th></tr></thead>
           <tbody>{lines.length === 0 && <tr><td colSpan="8" className="empty">↩<br />No items yet. Scan the item coming back, type its name, or press F3 for the Product Catalogue.</td></tr>}
             {lines.map((x, i) => <tr key={i} className={(i === row ? 'sel ' : '') + (i === editAt ? 'editing' : '')} onClick={(e) => { setRow(i); if (!['SELECT', 'OPTION', 'BUTTON'].includes(e.target.tagName)) listRef.current?.focus(); }} onDoubleClick={() => edit(i)}>
               <td>{i + 1}</td><td>{x.name}</td><td className="num">{x.qty}</td><td className="num">{rs2(x.rate)}</td><td className="num">{x.disc || 0}</td><td className="num">{rs2(net(x))}</td>
-              <td><select className="rsel" aria-label={`Reason for ${x.name}`} value={x.reason} onFocus={() => setRow(i)} onChange={(e) => setLines(lines.map((y, j) => (j === i ? { ...y, reason: e.target.value } : y)))}
+              <td><select className={cssSales.rsel} aria-label={`Reason for ${x.name}`} value={x.reason} onFocus={() => setRow(i)} onChange={(e) => setLines(lines.map((y, j) => (j === i ? { ...y, reason: e.target.value } : y)))}
                 onKeyDown={(e) => { if (['Escape', 'Enter', 'ArrowLeft'].includes(e.key)) { e.preventDefault(); e.stopPropagation(); listRef.current?.focus(); } }}>{REASONS.map((r) => <option key={r}>{r}</option>)}</select></td>
               <td><button title="Remove (Del)" aria-label={`Remove ${x.name}`} onClick={() => remove(i)}>✕</button></td></tr>)}</tbody></table>
-      </div>
-      <div className="status"><span>{lines.length} lines · {units} units · reasons are saved with the return</span>
-        {last && <span>✔ Last: <b>{last.returnNo}</b> · {rs2(last.total)} <button className="lnk" onClick={() => doPrint(last)}><Ico n="print" s={15} /> Reprint</button></span>}</div>
-      <div className="bottom">
-        <div className="bl">
+      <div className={cssTables.status}><span>{lines.length} lines · {units} units · reasons are saved with the return</span>
+        {last && <span>✔ Last: <b>{last.returnNo}</b> · {rs2(last.total)} <button className={cssButtons.lnk} onClick={() => doPrint(last)}><Ico n="print" s={15} /> Reprint</button></span>}</div>
+      <div className={cssSales.bottom}>
+        <div className={cssSales.bl}>
           <div><span>Prev. Bal:</span><i>{rs2(prev)}</i></div><div><span>This Bill:</span><i>{rs2(total)}</i></div>
           <div><span>Total Payable:</span><i className="pay">{rs2(payable)}</i></div>
         </div>
-        <div className="br">
+        <div className={cssSales.br}>
           <div><span>TOTAL BILL</span><i>{rs2(sub)}</i></div>
           <div><span className="red">DISCOUNT-1 Rs</span><input type="number" value={d1} placeholder="0.00" onChange={(e) => setD1(e.target.value)} /></div>
           <div><span className="red">DISCOUNT-2 %</span><input type="number" value={d2} placeholder="0" onChange={(e) => setD2(e.target.value)} /><i>{rs2(a2)}</i></div>
           <div><span>NET AMOUNT</span><i className="net">{rs2(total)}</i></div>
         </div>
       </div>
-      <div className="btns"><button onClick={() => reset()}>Clear <kbd>{KEYS.clear}</kbd></button><button disabled={!lines.length || busy} onClick={() => save(true)}><Ico n="print" s={15} /> Save & Print <kbd>{KEYS.savePrint}</kbd></button><button className="pri" disabled={!lines.length || busy} onClick={() => save(false)}>Save <kbd>{KEYS.save}</kbd></button><button onClick={onClose}>Close</button></div>
+      <div className={cssButtons.btns}><button onClick={() => reset()}>Clear <kbd>{KEYS.clear}</kbd></button><button disabled={!lines.length || busy} onClick={() => save(true)}><Ico n="print" s={15} /> Save & Print <kbd>{KEYS.savePrint}</kbd></button><button className="pri" disabled={!lines.length || busy} onClick={() => save(false)}>Save <kbd>{KEYS.save}</kbd></button><button onClick={onClose}>Close</button></div>
       {msg && <p className={msg.e ? 'rerr' : 'ok'} role={msg.e ? 'alert' : undefined}>{msg.e || msg.ok}</p>}
     </div>
-    {cat && <div className="modal" onClick={() => setCat(false)}><div className="mbox" onClick={(e) => e.stopPropagation()}>
+    {cat && <div className={cssModals.modal} onClick={() => setCat(false)}><div className={cssModals.mbox} onClick={(e) => e.stopPropagation()}>
       <b>{bill ? `Items on ${bill.billNo}` : 'Product Catalogue'}</b><input autoFocus placeholder="Search products" value={cq} onChange={(e) => setCq(e.target.value)} />
-      <div className="mlist">{pool.filter((p) => p.name.toLowerCase().includes(cq.toLowerCase())).map((p) => <div key={p.productId} className="hit" onClick={() => { pick(p); setCat(false); setCq(''); }}>{p.name} — {rs(p.price)} <small>{info(p)}</small></div>)}</div></div></div>}
+      <div className={cssModals.mlist}>{pool.filter((p) => p.name.toLowerCase().includes(cq.toLowerCase())).map((p) => <div key={p.productId} className={cssModals.hit} onClick={() => { pick(p); setCat(false); setCq(''); }}>{p.name} — {rs(p.price)} <small>{info(p)}</small></div>)}</div></div></div>}
     {ask && <Ask title={ask.title} err={askErr} onCancel={() => { setAsk(null); setAskErr(''); }} onOk={async (pw) => { const r = await ask.run(pw); if (r.error) setAskErr(r.error); else { setAsk(null); setAskErr(''); } }} />}
     {pr && <ReturnReceipt pr={pr} shop={shop} />}
   </>;
@@ -690,35 +698,35 @@ function SalesHistory({ onEdit, onPending }) {
   };
   const nb = (v, set) => <input type="number" min="0" value={v} onChange={(e) => { set(+e.target.value); setPage(0); }} style={{ width: 80 }} />;
   return <>
-    <div className="filters"><span>All tills and cashiers</span><span className="grow" /><button className="chip" onClick={onPending}>Pending Entries</button><button className="chip" onClick={csv}><Ico n="down" s={15} /> CSV</button></div>
-    <div className="filters">
+    <div className={cssForms.filters}><span>All tills and cashiers</span><span className="grow" /><button className={cssButtons.chip} onClick={onPending}>Pending Entries</button><button className={cssButtons.chip} onClick={csv}><Ico n="down" s={15} /> CSV</button></div>
+    <div className={cssForms.filters}>
       <input type="date" value={from} onChange={(e) => { setR([e.target.value, to]); setChip(''); setPage(0); }} style={{ width: 150 }} />→
       <input type="date" value={to} onChange={(e) => { setR([from, e.target.value]); setChip(''); setPage(0); }} style={{ width: 150 }} />
-      {['Today', 'Yesterday', '7 days', '30 days', 'This month'].map((k) => <button key={k} className={chip === k ? 'chip on' : 'chip'} onClick={() => pick(k)}>{k}</button>)}
+      {['Today', 'Yesterday', '7 days', '30 days', 'This month'].map((k) => <button key={k} className={chip === k ? `${cssButtons.chip} on` : cssButtons.chip} onClick={() => pick(k)}>{k}</button>)}
       <input placeholder="Bill #, customer or remarks" value={q} onChange={(e) => { setQ(e.target.value); setPage(0); }} style={{ maxWidth: 260 }} />
       <select value={sort} onChange={(e) => { setSort(e.target.value); setPage(0); }} style={{ width: 'auto' }}>{Object.keys(SORTS).map((k) => <option key={k}>{k}</option>)}</select>
       <b>Bill From</b>{nb(bf, setBf)}<b>To</b>{nb(bt, setBt)}
-      {['All', 'Cash', 'Credit', 'Voided'].map((k) => <button key={k} className={mode === k ? 'chip on' : 'chip'} onClick={() => { setMode(k); setPage(0); }}>{k}</button>)}
+      {['All', 'Cash', 'Credit', 'Voided'].map((k) => <button key={k} className={mode === k ? `${cssButtons.chip} on` : cssButtons.chip} onClick={() => { setMode(k); setPage(0); }}>{k}</button>)}
     </div>
     <label className="red"><input type="checkbox" checked={rem} onChange={(e) => setRem(e.target.checked)} style={{ width: 'auto' }} /> Remaining items only</label>
     <table style={{ width: '100%', marginTop: 8 }}><thead><tr><th>BILL #</th><th>DATE</th><th>MODE</th><th>DESCRIPTION</th><th className="num">GROSS TOTAL</th><th className="num">DISC</th><th className="num">DISC %</th><th className="num">NET BILL</th><th>REMARKS</th><th>USER</th></tr></thead>
       <tbody>{shown.length === 0 && <tr><td colSpan="10" className="empty">No sales in this range.</td></tr>}
         {shown.map((s) => <tr key={s.id} className={(s.voided ? 'void ' : '') + (s.disc > 0.005 ? 'dsc' : '')} onClick={() => setDet(s)} style={{ cursor: 'pointer' }}><td className="mono">{s.billNo}</td><td>{fmt(s.createdAt)}</td>
-          <td><span className={'tag ' + (s.type === 'CASH' ? 'Create' : 'Credit')}>{s.type === 'CASH' ? 'Cash' : 'Credit'}</span></td>
+          <td><span className={`${cssTables.tag} ` + (s.type === 'CASH' ? 'Create' : 'Credit')}>{s.type === 'CASH' ? 'Cash' : 'Credit'}</span></td>
           <td>{s.items[0]?.name}{s.items.length > 1 && ` +${s.items.length - 1} more`}<br /><small>{s.customer}</small></td>
           <td className="num">{rs2(s.gross)}</td><td className="num">{rs2(s.disc)}</td><td className="num">{s.pct.toFixed(2)}</td><td className="num"><b>{rs2(s.total)}</b></td><td>{s.remarks}</td><td>{s.cashier}</td></tr>)}</tbody></table>
-    <div className="grand"><span>Total Invoices: {rows.length} (totals include every page)</span><span className="grow" /><b>GRAND TOTAL</b><span>{rs2(G.g)}</span><span>{rs2(G.d)}</span><span>{G.g ? ((G.d / G.g) * 100).toFixed(2) : '0.00'}</span><span>{rs2(G.n)}</span></div>
-    <div className="filters" style={{ marginTop: 8 }}><small>Showing {rows.length ? pg * PER + 1 : 0}–{pg * PER + shown.length} of {rows.length}</small><span className="grow" />
-      <button className="chip" disabled={pg === 0} onClick={() => setPage(0)}>First</button><button className="chip" disabled={pg === 0} onClick={() => setPage(pg - 1)}>Previous</button>
-      <b>Page {pg + 1} of {pages}</b><button className="chip" disabled={pg >= pages - 1} onClick={() => setPage(pg + 1)}>Next</button><button className="chip" disabled={pg >= pages - 1} onClick={() => setPage(pages - 1)}>Last</button></div>
-    <div className="btns"><button onClick={load}>Refresh</button></div>
-    {det && <div className="modal" onClick={() => setDet(null)}><div className="mbox wide" onClick={(e) => e.stopPropagation()}>
-      <div className="mono" style={{ fontSize: 18 }}><b>{det.billNo}</b> {det.voided && <span className="tag Delete">VOIDED</span>} {det.edited && <span className="tag Update">EDITED</span>}</div>
+    <div className={cssTables.grand}><span>Total Invoices: {rows.length} (totals include every page)</span><span className="grow" /><b>GRAND TOTAL</b><span>{rs2(G.g)}</span><span>{rs2(G.d)}</span><span>{G.g ? ((G.d / G.g) * 100).toFixed(2) : '0.00'}</span><span>{rs2(G.n)}</span></div>
+    <div className={cssForms.filters} style={{ marginTop: 8 }}><small>Showing {rows.length ? pg * PER + 1 : 0}–{pg * PER + shown.length} of {rows.length}</small><span className="grow" />
+      <button className={cssButtons.chip} disabled={pg === 0} onClick={() => setPage(0)}>First</button><button className={cssButtons.chip} disabled={pg === 0} onClick={() => setPage(pg - 1)}>Previous</button>
+      <b>Page {pg + 1} of {pages}</b><button className={cssButtons.chip} disabled={pg >= pages - 1} onClick={() => setPage(pg + 1)}>Next</button><button className={cssButtons.chip} disabled={pg >= pages - 1} onClick={() => setPage(pages - 1)}>Last</button></div>
+    <div className={cssButtons.btns}><button onClick={load}>Refresh</button></div>
+    {det && <div className={cssModals.modal} onClick={() => setDet(null)}><div className={`${cssModals.mbox} wide`} onClick={(e) => e.stopPropagation()}>
+      <div className="mono" style={{ fontSize: 18 }}><b>{det.billNo}</b> {det.voided && <span className={`${cssTables.tag} Delete`}>VOIDED</span>} {det.edited && <span className={`${cssTables.tag} Update`}>EDITED</span>}</div>
       <p style={{ margin: 0 }}>{new Date(det.createdAt).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '')} · {det.type === 'CASH' ? 'Cash' : 'Credit'} · {det.customer} · by {det.cashier}</p>
       {det.voided && <p style={{ margin: 0, color: '#b91c1c' }}>Void reason: {det.voidReason}</p>}
       <table style={{ width: '100%' }}><thead><tr><th>#</th><th>DESCRIPTION</th><th className="num">QTY</th><th className="num">PRICE</th><th className="num">DISC %</th><th className="num">AMOUNT</th></tr></thead>
         <tbody>{det.items.map((x, i) => <tr key={i}><td>{i + 1}</td><td>{x.name}{x.taken === false && <><br /><small>Remaining, not taken yet</small></>}</td><td className="num">{x.qty}</td><td className="num">{rs2(x.rate)}</td><td className="num">{x.disc ? x.disc : ''}</td><td className="num">{rs2(x.qty * x.rate * (1 - (x.disc || 0) / 100))}</td></tr>)}</tbody></table>
-      <div className="dtot">
+      <div className={cssTables.dtot}>
         <div><span>Total Bill</span><i>{rs2(det.subtotal)}</i></div>
         <div><span>Discount-1</span><i>{rs2(det.discount1 ?? det.discount)}</i></div>
         <div><span>Discount-2</span><i>{rs2(det.discount2 ?? 0)}</i></div>
@@ -726,7 +734,7 @@ function SalesHistory({ onEdit, onPending }) {
         <div><span>{det.type === 'CASH' ? 'Cash Received' : 'Paid'}</span><i>{rs2(det.paid)}</i></div>
         <div><span>{det.type === 'CASH' ? 'Change' : 'Balance'}</span><i>{rs2(det.type === 'CASH' ? det.change : det.balance)}</i></div>
       </div>
-      <div className="btns" style={{ justifyContent: 'space-between' }}>
+      <div className={cssButtons.btns} style={{ justifyContent: 'space-between' }}>
         <button disabled={det.voided} onClick={() => setAsk({ title: `Void ${det.billNo}`, needReason: true, run: (pw, why) => api('sales/' + det.id, 'PUT', { action: 'void', password: pw, reason: why }) })}>🚫 Void invoice</button>
         <span><button disabled={det.voided} onClick={() => { const b = det; setDet(null); onEdit(b); }}><Ico n="pen" s={15} /> Edit</button> <button onClick={() => { setPr(det); setTimeout(() => { window.print(); setPr(null); }, 150); }}><Ico n="print" s={15} /> Reprint receipt</button> <button className="pri" onClick={() => setDet(null)}>Done</button></span>
       </div>
@@ -767,41 +775,41 @@ function ReturnHistory({ go }) {
   };
   const nb = (v, set) => <input type="number" min="0" value={v} onChange={(e) => { set(+e.target.value); setPage(0); }} style={{ width: 80 }} />;
   return <>
-    <div className="filters"><span>All tills and cashiers</span><span className="grow" /><button className="chip" onClick={() => go('Sales Return')}><Ico n="undo" s={15} /> New Sales Return</button><button className="chip" onClick={csv}><Ico n="down" s={15} /> CSV</button></div>
-    <div className="filters">
+    <div className={cssForms.filters}><span>All tills and cashiers</span><span className="grow" /><button className={cssButtons.chip} onClick={() => go('Sales Return')}><Ico n="undo" s={15} /> New Sales Return</button><button className={cssButtons.chip} onClick={csv}><Ico n="down" s={15} /> CSV</button></div>
+    <div className={cssForms.filters}>
       <input type="date" value={from} onChange={(e) => { setR([e.target.value, to]); setChip(''); setPage(0); }} style={{ width: 150 }} />→
       <input type="date" value={to} onChange={(e) => { setR([from, e.target.value]); setChip(''); setPage(0); }} style={{ width: 150 }} />
-      {['Today', 'Yesterday', '7 days', '30 days', 'This month'].map((k) => <button key={k} className={chip === k ? 'chip on' : 'chip'} onClick={() => pick(k)}>{k}</button>)}
+      {['Today', 'Yesterday', '7 days', '30 days', 'This month'].map((k) => <button key={k} className={chip === k ? `${cssButtons.chip} on` : cssButtons.chip} onClick={() => pick(k)}>{k}</button>)}
       <input placeholder="Return #, bill #, customer or remarks" value={q} onChange={(e) => { setQ(e.target.value); setPage(0); }} style={{ maxWidth: 300 }} />
       <select value={sort} onChange={(e) => { setSort(e.target.value); setPage(0); }} style={{ width: 'auto' }}>{Object.keys(SORTS).map((k) => <option key={k}>{k}</option>)}</select>
       <b>Return From</b>{nb(bf, setBf)}<b>To</b>{nb(bt, setBt)}
-      {['All', 'Cash', 'Credit'].map((k) => <button key={k} className={mode === k ? 'chip on' : 'chip'} onClick={() => { setMode(k); setPage(0); }}>{k}</button>)}
+      {['All', 'Cash', 'Credit'].map((k) => <button key={k} className={mode === k ? `${cssButtons.chip} on` : cssButtons.chip} onClick={() => { setMode(k); setPage(0); }}>{k}</button>)}
     </div>
     <label className="red"><input type="checkbox" checked={onlyBill} onChange={(e) => setOnlyBill(e.target.checked)} style={{ width: 'auto' }} /> Against a bill only</label>
     <table style={{ width: '100%', marginTop: 8 }}><thead><tr><th>RETURN #</th><th>DATE</th><th>MODE</th><th>DESCRIPTION</th><th>BILL #</th><th className="num">GROSS TOTAL</th><th className="num">DISC</th><th className="num">DISC %</th><th className="num">NET REFUND</th><th>REMARKS</th><th>USER</th></tr></thead>
       <tbody>{shown.length === 0 && <tr><td colSpan="11" className="empty">No returns in this range.</td></tr>}
         {shown.map((s) => <tr key={s.id} className={s.disc > 0.005 ? 'dsc' : ''} onClick={() => setDet(s)} style={{ cursor: 'pointer' }}><td className="mono">{s.returnNo}</td><td>{fmt(s.createdAt)}</td>
-          <td><span className={'tag ' + (s.type === 'CASH' ? 'Create' : 'Credit')}>{s.type === 'CASH' ? 'Cash' : 'Credit'}</span></td>
+          <td><span className={`${cssTables.tag} ` + (s.type === 'CASH' ? 'Create' : 'Credit')}>{s.type === 'CASH' ? 'Cash' : 'Credit'}</span></td>
           <td>{s.items[0]?.name}{s.items.length > 1 && ` +${s.items.length - 1} more`}<br /><small>{s.customer}</small></td><td className="mono">{s.billNo}</td>
           <td className="num">{rs2(s.gross)}</td><td className="num">{rs2(s.disc)}</td><td className="num">{s.pct.toFixed(2)}</td><td className="num"><b>{rs2(s.total)}</b></td><td>{s.remarks}</td><td>{s.cashier}</td></tr>)}</tbody></table>
-    <div className="grand"><span>Total Returns: {rows.length} (totals include every page)</span><span className="grow" /><b>GRAND TOTAL</b><span>{rs2(G.g)}</span><span>{rs2(G.d)}</span><span>{G.g ? ((G.d / G.g) * 100).toFixed(2) : '0.00'}</span><span>{rs2(G.n)}</span></div>
-    <div className="filters" style={{ marginTop: 8 }}><small>Showing {rows.length ? pg * PER + 1 : 0}–{pg * PER + shown.length} of {rows.length}</small><span className="grow" />
-      <button className="chip" disabled={pg === 0} onClick={() => setPage(0)}>First</button><button className="chip" disabled={pg === 0} onClick={() => setPage(pg - 1)}>Previous</button>
-      <b>Page {pg + 1} of {pages}</b><button className="chip" disabled={pg >= pages - 1} onClick={() => setPage(pg + 1)}>Next</button><button className="chip" disabled={pg >= pages - 1} onClick={() => setPage(pages - 1)}>Last</button></div>
-    <div className="btns"><button onClick={load}>Refresh</button></div>
-    {det && <div className="modal" onClick={() => setDet(null)}><div className="mbox wide" onClick={(e) => e.stopPropagation()}>
+    <div className={cssTables.grand}><span>Total Returns: {rows.length} (totals include every page)</span><span className="grow" /><b>GRAND TOTAL</b><span>{rs2(G.g)}</span><span>{rs2(G.d)}</span><span>{G.g ? ((G.d / G.g) * 100).toFixed(2) : '0.00'}</span><span>{rs2(G.n)}</span></div>
+    <div className={cssForms.filters} style={{ marginTop: 8 }}><small>Showing {rows.length ? pg * PER + 1 : 0}–{pg * PER + shown.length} of {rows.length}</small><span className="grow" />
+      <button className={cssButtons.chip} disabled={pg === 0} onClick={() => setPage(0)}>First</button><button className={cssButtons.chip} disabled={pg === 0} onClick={() => setPage(pg - 1)}>Previous</button>
+      <b>Page {pg + 1} of {pages}</b><button className={cssButtons.chip} disabled={pg >= pages - 1} onClick={() => setPage(pg + 1)}>Next</button><button className={cssButtons.chip} disabled={pg >= pages - 1} onClick={() => setPage(pages - 1)}>Last</button></div>
+    <div className={cssButtons.btns}><button onClick={load}>Refresh</button></div>
+    {det && <div className={cssModals.modal} onClick={() => setDet(null)}><div className={`${cssModals.mbox} wide`} onClick={(e) => e.stopPropagation()}>
       <div className="mono" style={{ fontSize: 18 }}><b>{det.returnNo}</b></div>
       <p style={{ margin: 0 }}>{new Date(det.createdAt).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '')} · {det.type === 'CASH' ? 'Cash refund' : 'Credit to account'} · {det.customer} · by {det.cashier}{det.billNo && ` · against ${det.billNo}`}</p>
       {det.remarks && <p style={{ margin: 0 }}>Remarks: {det.remarks}</p>}
       <table style={{ width: '100%' }}><thead><tr><th>#</th><th>DESCRIPTION</th><th>REASON</th><th className="num">QTY</th><th className="num">PRICE</th><th className="num">DISC %</th><th className="num">AMOUNT</th></tr></thead>
         <tbody>{det.items.map((x, i) => <tr key={i}><td>{i + 1}</td><td>{x.name}</td><td>{x.reason}</td><td className="num">{x.qty}</td><td className="num">{rs2(x.rate)}</td><td className="num">{x.disc ? x.disc : ''}</td><td className="num">{rs2(x.qty * x.rate * (1 - (x.disc || 0) / 100))}</td></tr>)}</tbody></table>
-      <div className="dtot">
+      <div className={cssTables.dtot}>
         <div><span>Total Bill</span><i>{rs2(det.subtotal)}</i></div>
         <div><span>Discount-1</span><i>{rs2(det.discount1 ?? det.discount)}</i></div>
         <div><span>Discount-2</span><i>{rs2(det.discount2 ?? 0)}</i></div>
         <div className="b"><span>Total Refund</span><i>{rs2(det.total)}</i></div>
       </div>
-      <div className="btns" style={{ justifyContent: 'flex-end' }}>
+      <div className={cssButtons.btns} style={{ justifyContent: 'flex-end' }}>
         <button onClick={() => { setPr(det); setTimeout(() => { window.print(); setPr(null); }, 150); }}><Ico n="print" s={15} /> Reprint receipt</button> <button className="pri" onClick={() => setDet(null)}>Done</button>
       </div>
     </div></div>}
@@ -820,7 +828,7 @@ function Pending({ onResume }) {
       <tbody>{list.length === 0 && <tr><td colSpan="6" className="empty">No pending entries.</td></tr>}
         {list.map((p) => <tr key={p.id}><td>{new Date(p.createdAt).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}</td><td>{p.customer || 'Walk-in customer'}</td>
           <td>{p.items.slice(0, 2).map((x) => x.name).join(', ')}{p.items.length > 2 && ` +${p.items.length - 2} more`}</td><td className="num">{rs2(p.total)}</td>
-          <td><span className={'tag ' + (p.auto ? 'Credit' : 'Update')}>{p.auto ? 'Auto-saved' : 'Held'}</span></td>
+          <td><span className={`${cssTables.tag} ` + (p.auto ? 'Credit' : 'Update')}>{p.auto ? 'Auto-saved' : 'Held'}</span></td>
           <td><button className="pri" onClick={() => onResume(p)}>Resume</button> <button onClick={async () => { if (confirm('Delete this pending bill?')) { await api('pending/' + p.id, 'DELETE'); load(); } }}>Delete</button></td></tr>)}</tbody></table>
   </>;
 }
@@ -836,9 +844,9 @@ function ChangePassword({ onClose }) {
     setM({ ok: 'Password changed.' }); setO(''); setN(''); setC(''); if (onClose) setTimeout(onClose, 1100);
   };
   const f = (l, v, set, ref) => <div><label>{l}</label><input ref={ref} type="password" autoComplete="off" value={v} onChange={(e) => { set(e.target.value); setM(null); }} onKeyDown={(e) => e.key === 'Enter' && save()} /></div>;
-  return <div className="pwform">{f('Current password', o, setO, first)}{f('New password', n, setN)}{f('Confirm new password', c, setC)}
+  return <div className={cssSettings.pwform}>{f('Current password', o, setO, first)}{f('New password', n, setN)}{f('Confirm new password', c, setC)}
     {m?.e && <p className="rerr" role="alert">{m.e}</p>}{m?.ok && <p className="ok">{m.ok}</p>}
-    <div className="btns" style={{ justifyContent: 'flex-end', margin: 0 }}>{onClose && <button onClick={onClose}>Cancel</button>}<button className="pri" disabled={!o || !n || busy} onClick={save}>Change password</button></div></div>;
+    <div className={cssButtons.btns} style={{ justifyContent: 'flex-end', margin: 0 }}>{onClose && <button onClick={onClose}>Cancel</button>}<button className="pri" disabled={!o || !n || busy} onClick={save}>Change password</button></div></div>;
 }
 
 const num = (v) => parseFloat(v) || 0;
@@ -847,18 +855,14 @@ const UNITS = ['pc', 'pcs', 'kg', 'g', 'ltr', 'ml', 'dozen', 'pack', 'box', 'pla
 const PBLANK = { id: '', pid: '', code: '', barcode: '', name: '', unit: 'pc', costPrice: '', profitPct: '25', salePrice: '', discPct: '0', discPiece: '', company: '', category: '', supplier: '(baked here)', location: '', stock: '', minStock: '0', askQty: 'No', loose: 'No', expiry: 'No', inHouse: 'No', active: 'Yes' };
 const toForm = (p) => {
   const s = num(p.salePrice), c = num(p.costPrice);
-  return {
-    ...PBLANK, id: p.id, pid: p.pid ?? '', code: p.code || '', barcode: p.barcode || '', name: p.name, unit: p.unit || 'pc', costPrice: String(c),
+  return { ...PBLANK, id: p.id, pid: p.pid ?? '', code: p.code || '', barcode: p.barcode || '', name: p.name, unit: p.unit || 'pc', costPrice: String(c),
     profitPct: String(p.profitPct ?? (c ? (((s - c) / c) * 100).toFixed(2) : 25)), salePrice: String(s), discPct: String(p.discPct || 0), discPiece: ((s * num(p.discPct)) / 100).toFixed(2),
     company: p.company || '', category: p.category || '', supplier: p.supplier || '(baked here)', location: p.location || '', stock: String(p.stock ?? ''), minStock: String(p.minStock || 0),
-    askQty: yn(p.askQty), loose: yn(p.loose), expiry: yn(p.expiry), inHouse: yn(p.inHouse), active: yn(p.active !== false)
-  };
+    askQty: yn(p.askQty), loose: yn(p.loose), expiry: yn(p.expiry), inHouse: yn(p.inHouse), active: yn(p.active !== false) };
 };
-const fromForm = (f) => ({
-  code: f.code.trim(), barcode: f.barcode.trim(), name: f.name.trim(), unit: f.unit, costPrice: num(f.costPrice), profitPct: num(f.profitPct), salePrice: num(f.salePrice),
+const fromForm = (f) => ({ code: f.code.trim(), barcode: f.barcode.trim(), name: f.name.trim(), unit: f.unit, costPrice: num(f.costPrice), profitPct: num(f.profitPct), salePrice: num(f.salePrice),
   discPct: num(f.discPct), company: f.company.trim(), category: f.category.trim(), supplier: f.supplier.trim(), location: f.location.trim(), stock: num(f.stock), minStock: num(f.minStock),
-  askQty: f.askQty === 'Yes', loose: f.loose === 'Yes', expiry: f.expiry === 'Yes', inHouse: f.inHouse === 'Yes', active: f.active === 'Yes'
-});
+  askQty: f.askQty === 'Yes', loose: f.loose === 'Yes', expiry: f.expiry === 'Yes', inHouse: f.inHouse === 'Yes', active: f.active === 'Yes' });
 
 function Products({ onClose }) {
   const [list, setList] = useState([]), [f, setF] = useState(PBLANK), [q, setQ] = useState(''), [cat, setCat] = useState(''), [comp, setComp] = useState(''), [st, setSt] = useState('Active'), [cur, setCur] = useState(0), [msg, setMsg] = useState('');
@@ -910,45 +914,45 @@ function Products({ onClose }) {
   };
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
   const T = (k, l, cls = '') => <div><label>{l}</label><input className={cls} value={f[k]} onChange={set(k)} /></div>;
-  const M = (k, l) => <div><label>{l}</label><div className="rsw"><span>Rs</span><input type="number" step="any" min="0" placeholder="0.00" value={f[k]} onChange={(e) => setCalc(k, e.target.value)} /></div></div>;
+  const M = (k, l) => <div><label>{l}</label><div className={cssProducts.rsw}><span>Rs</span><input type="number" step="any" min="0" placeholder="0.00" value={f[k]} onChange={(e) => setCalc(k, e.target.value)} /></div></div>;
   const N = (k, l) => <div><label>{l}</label><input type="number" step="any" value={f[k]} onChange={(e) => setCalc(k, e.target.value)} /></div>;
   const S = (k, l, o) => <div><label>{l}</label><select value={f[k]} onChange={set(k)}>{o.map((x) => <option key={x}>{x}</option>)}</select></div>;
   const L = (k, l, id) => <div><label>{l}</label><input list={id} value={f[k]} placeholder="—" onChange={set(k)} /></div>;
   const YN = ['No', 'Yes'];
-  return <div className="pw">
-    <div className="pform" ref={formRef} onKeyDown={formKey}>
-      <div className="pr r1">
+  return <div className={cssProducts.pw}>
+    <div className={cssForms.pform} ref={formRef} onKeyDown={formKey}>
+      <div className={`${cssProducts.pr} ${cssProducts.r1}`}>
         {T('code', 'Code/SKU', 'yel')}
         <div><label>Product ID</label><input readOnly value={f.id ? f.pid : nextPid} className="yel" /></div>
         {T('barcode', 'Barcode')}{T('name', 'Product Name')}{S('unit', 'Unit', UNITS)}{M('costPrice', 'Cost Price')}{N('profitPct', 'Profit %')}{M('salePrice', 'Sale Price')}{N('discPct', 'Disc %')}{M('discPiece', 'Disc/Piece')}
       </div>
-      <div className="pr r2">
+      <div className={`${cssProducts.pr} ${cssProducts.r2}`}>
         {L('company', 'Company', 'dl-comp')}{L('category', 'Category', 'dl-cat')}{L('supplier', 'Supplier Account', 'dl-sup')}{T('location', 'Location')}
         <div><label>Stock</label><input type="number" step="any" readOnly={!!f.id} placeholder="—" value={f.stock} onChange={set('stock')} className={f.id ? 'ro' : ''} /></div>
         {N('minStock', 'Min Stock')}{S('askQty', 'Enter Qty on Bill', YN)}{S('loose', 'Loose Sale', YN)}{S('expiry', 'Expiry', YN)}{S('inHouse', 'In-house', YN)}{S('active', 'Active', ['Yes', 'No'])}
       </div>
       <datalist id="dl-comp">{uniq('company').map((x) => <option key={x} value={x} />)}</datalist><datalist id="dl-cat">{uniq('category').map((x) => <option key={x} value={x} />)}</datalist>
       <datalist id="dl-sup">{uniq('supplier').map((x) => <option key={x} value={x} />)}</datalist>
-      <div className="pbar"><small>{f.id ? `Editing ${f.name}` : 'New product'} · Enter for the next field · F9 to save{f.id ? ' · stock changes through sales and purchases' : ''}</small>
+      <div className={cssProducts.pbar}><small>{f.id ? `Editing ${f.name}` : 'New product'} · Enter for the next field · F9 to save{f.id ? ' · stock changes through sales and purchases' : ''}</small>
         {msg && <b className="ok">{msg}</b>}<span className="grow" />
         {f.id && <button onClick={del}>Delete</button>}<button onClick={() => setF(PBLANK)}><Ico n="refresh" s={15} /> Reset <kbd>F4</kbd></button><button className="pri" onClick={save}>💾 Save <kbd>F9</kbd></button></div>
     </div>
-    <div className="pfilters" onKeyDown={listKey}>
+    <div className={cssProducts.pfilters} onKeyDown={listKey}>
       <input style={{ maxWidth: 300 }} placeholder="Find: name, item code or barcode" value={q} onChange={(e) => { setQ(e.target.value); setCur(0); }} />
       <select style={{ width: 190 }} value={cat} onChange={(e) => { setCat(e.target.value); setCur(0); }}><option value="">All categories</option>{uniq('category').map((x) => <option key={x}>{x}</option>)}</select>
       <select style={{ width: 190 }} value={comp} onChange={(e) => { setComp(e.target.value); setCur(0); }}><option value="">All companies</option>{uniq('company').map((x) => <option key={x}>{x}</option>)}</select>
-      {['Active', 'Inactive', 'All'].map((k) => <button key={k} className={st === k ? 'chip on' : 'chip'} onClick={() => { setSt(k); setCur(0); }}>{k}</button>)}
+      {['Active', 'Inactive', 'All'].map((k) => <button key={k} className={st === k ? `${cssButtons.chip} on` : cssButtons.chip} onClick={() => { setSt(k); setCur(0); }}>{k}</button>)}
       <small>{rows.length} items{rows.length > 500 ? ' (first 500 shown)' : ''} · ↑↓ and Enter to load one into the form</small>
     </div>
-    <div className="plist" tabIndex={0} onKeyDown={listKey}>
+    <div className={cssProducts.plist} tabIndex={0} onKeyDown={listKey}>
       <table><thead><tr><th>ITEM CODE</th><th>PRODUCT DESCRIPTION</th><th className="num">STOCK</th><th>COMPANY</th><th>CATEGORY</th><th className="num">SALE PRICE</th><th className="num">COST PRICE</th><th>SUPPLIER</th></tr></thead>
         <tbody>{shown.length === 0 && <tr><td colSpan="8" className="empty">No products found.</td></tr>}
           {shown.map((p, i) => <tr key={p.id} className={i === cur ? 'cur' : ''} onClick={() => setCur(i)} onDoubleClick={() => setF(toForm(p))}>
-            <td>{p.code}</td><td><b>{p.name}</b> {p.loose && <span className="badge">Loose</span>}</td>
-            <td className={'stk' + (p.stock < 0 ? ' neg' : '')}>{Number(p.stock || 0).toLocaleString(undefined, { maximumFractionDigits: 3 })} <small>{p.unit}</small></td>
+            <td>{p.code}</td><td><b>{p.name}</b> {p.loose && <span className={cssProducts.badge}>Loose</span>}</td>
+            <td className={cssProducts.stk + (p.stock < 0 ? ' neg' : '')}>{Number(p.stock || 0).toLocaleString(undefined, { maximumFractionDigits: 3 })} <small>{p.unit}</small></td>
             <td>{p.company}</td><td>{p.category}</td><td className="num"><b>{rs2(p.salePrice)}</b></td><td className="num">{rs2(p.costPrice)}</td><td>{p.supplier && p.supplier !== '(baked here)' ? p.supplier : ''}</td></tr>)}</tbody></table>
     </div>
-    <div className="btns"><button onClick={() => { setQ(''); setCat(''); setComp(''); setSt('All'); }}>All Products</button><button onClick={csv}><Ico n="down" s={15} /> CSV</button><button onClick={onClose}>Close</button></div>
+    <div className={cssButtons.btns}><button onClick={() => { setQ(''); setCat(''); setComp(''); setSt('All'); }}>All Products</button><button onClick={csv}><Ico n="down" s={15} /> CSV</button><button onClick={onClose}>Close</button></div>
   </div>;
 }
 
@@ -965,14 +969,14 @@ function Audit() {
   };
   return <>
     <p>Every sale, edit, price change, void, approval and backup, traceable to a person and a time</p>
-    <div className="filters">
-      {Object.entries(R).map(([k, v]) => <button key={k} className={v === days ? 'chip on' : 'chip'} onClick={() => setDays(v)}>{k}</button>)}
+    <div className={cssForms.filters}>
+      {Object.entries(R).map(([k, v]) => <button key={k} className={v === days ? `${cssButtons.chip} on` : cssButtons.chip} onClick={() => setDays(v)}>{k}</button>)}
       <input placeholder="Search summaries" value={q} onChange={(e) => setQ(e.target.value)} style={{ maxWidth: 260 }} />
-      <span className="grow" /><button className="chip" onClick={csv}><Ico n="down" s={15} /> CSV</button></div>
+      <span className="grow" /><button className={cssButtons.chip} onClick={csv}><Ico n="down" s={15} /> CSV</button></div>
     <table><thead><tr><th>WHEN</th><th>WHO</th><th>ACTION</th><th>RECORD</th><th>SUMMARY</th></tr></thead>
       <tbody>{shown.length === 0 && <tr><td colSpan="5">Nothing logged in this range.</td></tr>}
         {shown.map((r) => <tr key={r.id}><td>{new Date(r.createdAt).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}</td><td>{r.who}</td>
-          <td><span className={'tag ' + r.action}>{r.action}</span></td><td>{r.record}</td><td>{r.summary}</td></tr>)}</tbody></table>
+          <td><span className={`${cssTables.tag} ` + r.action}>{r.action}</span></td><td>{r.record}</td><td>{r.summary}</td></tr>)}</tbody></table>
   </>;
 }
 
@@ -980,19 +984,19 @@ const PREF_KEY = 'falcon-prefs';
 const COLOURS = { Green: '#2e7d32', Blue: '#2347b0', Purple: '#7c4dcc', Pink: '#c2417a', Orange: '#b4501c', Teal: '#0f8b8d' };
 const DEF_PREFS = { theme: 'Light', colour: '', size: 90, width: 75, lang: 'English', keepTabs: true };
 const getPrefs = () => { try { return { ...DEF_PREFS, ...JSON.parse(localStorage.getItem(PREF_KEY) || '{}') }; } catch { return DEF_PREFS; } };
-const savePrefs = (p) => { try { localStorage.setItem(PREF_KEY, JSON.stringify(p)); } catch { } window.dispatchEvent(new Event('falcon-prefs')); };
+const savePrefs = (p) => { try { localStorage.setItem(PREF_KEY, JSON.stringify(p)); } catch {} window.dispatchEvent(new Event('falcon-prefs')); };
 const ROLES = ['Owner / Admin', 'Accountant', 'Cashier / Counter'];
 const SET_NAV = [['shop', 'Shop profile', 'store'], ['staff', 'Staff & roles', 'users'], ['look', 'Look & language', 'palette'], ['printer', 'Printer & limits', 'print'], ['keys', 'Keyboard shortcuts', 'kbd']];
 const SET_MORE = [['Bill Template', 'Bill template', 'receipt'], ['Backup Data', 'Backup', 'db'], ['Audit Log', 'Audit log', 'shield'], ['Updates', 'Updates', 'cloud']];
 
 function Seg({ value, opts, onChange }) {
-  return <div className="seg">{opts.map(([v, l]) => <button key={v} className={String(v) === String(value) ? 'on' : ''} onClick={() => onChange(v)}>{l}</button>)}</div>;
+  return <div className={cssButtons.seg}>{opts.map(([v, l]) => <button key={v} className={String(v) === String(value) ? 'on' : ''} onClick={() => onChange(v)}>{l}</button>)}</div>;
 }
 function Panel({ title, sub, children, foot, action }) {
-  return <div className="spanel"><div className="sph"><div><b>{title}</b>{sub && <small>{sub}</small>}</div>{action}</div><div className="spb">{children}</div>{foot}</div>;
+  return <div className={cssSettings.spanel}><div className={cssSettings.sph}><div><b>{title}</b>{sub && <small>{sub}</small>}</div>{action}</div><div className={cssSettings.spb}>{children}</div>{foot}</div>;
 }
 function SaveBar({ dirty, onSave, onDiscard, saved }) {
-  return <div className="spf">{saved && !dirty && <span className="ok">Saved ✓</span>}<span className="grow" /><button disabled={!dirty} onClick={onDiscard}>Discard</button><button className="pri" disabled={!dirty} onClick={onSave}>Save</button></div>;
+  return <div className={cssSettings.spf}>{saved && !dirty && <span className="ok">Saved ✓</span>}<span className="grow" /><button disabled={!dirty} onClick={onDiscard}>Discard</button><button className="pri" disabled={!dirty} onClick={onSave}>Save</button></div>;
 }
 
 function Settings({ section = 'shop', go }) {
@@ -1007,7 +1011,7 @@ function Settings({ section = 'shop', go }) {
   const set = (k, v) => { setS({ ...s, [k]: v }); setSaved(false); };
   const setPref = (k, v) => { const p = { ...prefs, [k]: v }; setPrefs(p); savePrefs(p); };
   const txt = (k, l, ph) => <div><label>{l}</label><input value={s[k] || ''} placeholder={ph} onChange={(e) => set(k, e.target.value)} /></div>;
-  const num = (k, l, unit, pre, hint) => <div><label>{l}</label><div className="unit">{pre && <span>{pre}</span>}<input type="number" min="0" value={s[k] ?? ''} onChange={(e) => set(k, e.target.value === '' ? '' : +e.target.value)} />{unit && <span>{unit}</span>}</div>{hint && <small>{hint}</small>}</div>;
+  const num = (k, l, unit, pre, hint) => <div><label>{l}</label><div className={cssForms.unit}>{pre && <span>{pre}</span>}<input type="number" min="0" value={s[k] ?? ''} onChange={(e) => set(k, e.target.value === '' ? '' : +e.target.value)} />{unit && <span>{unit}</span>}</div>{hint && <small>{hint}</small>}</div>;
   const logo = (f) => {
     if (!f) return; const r = new FileReader();
     r.onload = () => { const im = new Image(); im.onload = () => { const k = Math.min(1, 600 / im.width), c = document.createElement('canvas'); c.width = im.width * k; c.height = im.height * k; c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); set('logo', c.toDataURL('image/png')); }; im.src = r.result; };
@@ -1023,52 +1027,52 @@ function Settings({ section = 'shop', go }) {
   const shop = s;
   let body;
   if (sec === 'shop') body = <Panel title="Shop profile" sub="Printed on receipts and reports" foot={<SaveBar dirty={dirty} saved={saved} onSave={save} onDiscard={discard} />}>
-    <div className="sgrid"><div className="full">{txt('name', 'Shop name')}</div><div className="full">{txt('address', 'Address')}</div>{txt('phone', 'Phone')}
+    <div className={cssSettings.sgrid}><div className={cssSettings.full}>{txt('name', 'Shop name')}</div><div className={cssSettings.full}>{txt('address', 'Address')}</div>{txt('phone', 'Phone')}
       <div><label>Currency</label><input value="PKR (Rs)" disabled /><small>PKR only in v1</small></div>
       {num('openingCash', 'Opening cash in hand', '', 'Rs', 'Cash in the drawer before Falcon was started. The Cash Book begins from this.')}
-      <div className="full"><label>Receipt footer text</label><textarea rows="3" value={s.footer || ''} onChange={(e) => set('footer', e.target.value)} /></div>
-      <div className="full logo">{s.logo ? <img src={s.logo} alt="logo" /> : <div className="nologo">No logo</div>}
-        <label className="btnlike"><Ico n="up" s={15} /> Upload logo<input type="file" accept="image/*" hidden onChange={(e) => logo(e.target.files[0])} /></label>
+      <div className={cssSettings.full}><label>Receipt footer text</label><textarea rows="3" value={s.footer || ''} onChange={(e) => set('footer', e.target.value)} /></div>
+      <div className={`${cssSettings.full} ${cssSettings.logo}`}>{s.logo ? <img src={s.logo} alt="logo" /> : <div className={cssSettings.nologo}>No logo</div>}
+        <label className={cssButtons.btnlike}><Ico n="up" s={15} /> Upload logo<input type="file" accept="image/*" hidden onChange={(e) => logo(e.target.files[0])} /></label>
         <button onClick={() => set('logo', '')} disabled={!s.logo}>Remove</button></div></div></Panel>;
   else if (sec === 'staff') body = <Panel title="Staff & roles" sub="Only an Admin can add people. There is no self sign-up." action={isAdmin && <button className="pri" onClick={() => { setErr(''); setEdit({ name: '', username: '', role: 'Cashier / Counter', password: '', dailyDiscountLimit: '', creditLimit: '', active: true }); }}><Ico n="user" s={15} /> Add staff</button>}>
     <table style={{ width: '100%' }}><thead><tr><th>NAME</th><th>ROLE</th><th className="num">DAILY DISCOUNT LIMIT</th><th className="num">CREDIT SALE LIMIT</th><th>STATUS</th></tr></thead>
       <tbody>{users.map((u) => <tr key={u.id} style={{ cursor: isAdmin ? 'pointer' : 'default' }} onClick={() => isAdmin && (setErr(''), setEdit({ ...u, password: '' }))}>
-        <td>{u.name} {u.id === me.uid && <span className="tag Update">you</span>}<br /><small>@{u.username}</small></td><td>{u.role}</td><td className="num">{lim(u.dailyDiscountLimit)}</td><td className="num">{lim(u.creditLimit)}</td>
-        <td><span className={'tag ' + (u.active !== false ? 'Create' : 'Delete')}>{u.active !== false ? 'Active' : 'Off'}</span></td></tr>)}</tbody></table>
+        <td>{u.name} {u.id === me.uid && <span className={`${cssTables.tag} Update`}>you</span>}<br /><small>@{u.username}</small></td><td>{u.role}</td><td className="num">{lim(u.dailyDiscountLimit)}</td><td className="num">{lim(u.creditLimit)}</td>
+        <td><span className={`${cssTables.tag} ` + (u.active !== false ? 'Create' : 'Delete')}>{u.active !== false ? 'Active' : 'Off'}</span></td></tr>)}</tbody></table>
     {isAdmin && <small style={{ display: 'block', padding: 10 }}>Click a person to edit their role, limits, PIN or switch them off.</small>}</Panel>;
   else if (sec === 'look') body = <Panel title="Look & language" sub="Applies to this till">
-    <div className="sgrid"><div className="full"><label>Theme</label><Seg value={prefs.theme} onChange={(v) => setPref('theme', v)} opts={[['Light', 'Light'], ['Dark', 'Dark'], ['Match', 'Match Windows']]} /></div>
-      <div className="full"><label>Colour</label><div className="swatches">{Object.entries(COLOURS).map(([n, c]) => <button key={n} className={prefs.colour === n ? 'on' : ''} onClick={() => setPref('colour', prefs.colour === n ? '' : n)}><i style={{ background: c }}>{prefs.colour === n ? '✓' : ''}</i>{n}</button>)}</div><small>Buttons, highlights and charts. Click the chosen colour again to go back to per-tab colours.</small></div>
-      <div className="full"><label>Sales Invoice size</label><Seg value={prefs.size} onChange={(v) => setPref('size', +v)} opts={[[70, '70%'], [80, '80%'], [90, '90%'], [100, '100% (normal)'], [110, '110%'], [125, '125%']]} /><small>This PC only. Smaller fits more items on the bill.</small></div>
-      <div className="full"><label>Sales Invoice width</label><Seg value={prefs.width} onChange={(v) => setPref('width', +v)} opts={[[50, '50%'], [75, '75%'], [100, '100% (full)']]} /><small>This PC only. How much of the window the Sales Invoice takes.</small></div>
-      <div className="full"><label>Language · زبان</label><Seg value={prefs.lang} onChange={(v) => setPref('lang', v)} opts={[['English', 'English'], ['Urdu', 'اردو']]} /><small>Receipts print in the same language.</small></div>
-      <div className="full toggle"><div><b>Keep invoice tabs active</b><br /><small>Remember every open Sales Invoice and Sales Return tab, with all its items, when you open another screen and come back.</small></div><button type="button" role="switch" aria-checked={!!prefs.keepTabs} className={'sw' + (prefs.keepTabs ? ' on' : '')} onClick={() => setPref('keepTabs', !prefs.keepTabs)}><i /></button></div></div></Panel>;
+    <div className={cssSettings.sgrid}><div className={cssSettings.full}><label>Theme</label><Seg value={prefs.theme} onChange={(v) => setPref('theme', v)} opts={[['Light', 'Light'], ['Dark', 'Dark'], ['Match', 'Match Windows']]} /></div>
+      <div className={cssSettings.full}><label>Colour</label><div className={cssSettings.swatches}>{Object.entries(COLOURS).map(([n, c]) => <button key={n} className={prefs.colour === n ? 'on' : ''} onClick={() => setPref('colour', prefs.colour === n ? '' : n)}><i style={{ background: c }}>{prefs.colour === n ? '✓' : ''}</i>{n}</button>)}</div><small>Buttons, highlights and charts. Click the chosen colour again to go back to per-tab colours.</small></div>
+      <div className={cssSettings.full}><label>Sales Invoice size</label><Seg value={prefs.size} onChange={(v) => setPref('size', +v)} opts={[[70, '70%'], [80, '80%'], [90, '90%'], [100, '100% (normal)'], [110, '110%'], [125, '125%']]} /><small>This PC only. Smaller fits more items on the bill.</small></div>
+      <div className={cssSettings.full}><label>Sales Invoice width</label><Seg value={prefs.width} onChange={(v) => setPref('width', +v)} opts={[[50, '50%'], [75, '75%'], [100, '100% (full)']]} /><small>This PC only. How much of the window the Sales Invoice takes.</small></div>
+      <div className={cssSettings.full}><label>Language · زبان</label><Seg value={prefs.lang} onChange={(v) => setPref('lang', v)} opts={[['English', 'English'], ['Urdu', 'اردو']]} /><small>Receipts print in the same language.</small></div>
+      <div className={`${cssSettings.full} ${cssSettings.toggle}`}><div><b>Keep invoice tabs active</b><br /><small>Remember every open Sales Invoice and Sales Return tab, with all its items, when you open another screen and come back.</small></div><button type="button" role="switch" aria-checked={!!prefs.keepTabs} className={cssButtons.sw + (prefs.keepTabs ? ' on' : '')} onClick={() => setPref('keepTabs', !prefs.keepTabs)}><i /></button></div></div></Panel>;
   else if (sec === 'printer') body = <Panel title="Printer, counter & safety" foot={<SaveBar dirty={dirty} saved={saved} onSave={save} onDiscard={discard} />}>
-    <div className="sgrid">{num('returnLimit', 'Returns needing approval above', '', 'Rs', 'Cashier returns above this need an Admin or Accountant PIN')}{num('expiryDays', 'Expiry warning window', 'days', '', 'Show items expiring within this many days')}
+    <div className={cssSettings.sgrid}>{num('returnLimit', 'Returns needing approval above', '', 'Rs', 'Cashier returns above this need an Admin or Accountant PIN')}{num('expiryDays', 'Expiry warning window', 'days', '', 'Show items expiring within this many days')}
       <div><label>Receipt paper width</label><Seg value={s.paper || '80'} onChange={(v) => set('paper', v)} opts={[['80', '80 mm'], ['58', '58 mm']]} /></div>{num('gst', 'GST on purchases', '%', '', 'Shown as "Price + GST" on the Purchase screen (0 = none)')}
-      <div className="full toggle"><div><b>Print a receipt for every sale</b><br /><small>Otherwise use Save & Print (F10)</small></div><button className={'sw' + (s.autoPrint ? ' on' : '')} onClick={() => set('autoPrint', !s.autoPrint)}><i /></button></div></div></Panel>;
+      <div className={`${cssSettings.full} ${cssSettings.toggle}`}><div><b>Print a receipt for every sale</b><br /><small>Otherwise use Save & Print (F10)</small></div><button className={cssButtons.sw + (s.autoPrint ? ' on' : '')} onClick={() => set('autoPrint', !s.autoPrint)}><i /></button></div></div></Panel>;
   else if (sec === 'keys') body = <KeysPanel uid={me.uid} />;
   return <div className="settings">
-    <p className="ssub">Shop setup, staff, tills, printing and safety</p>
-    <div className="slayout"><nav className="snav">{SET_NAV.map(([k, l, i]) => <button key={k} className={sec === k ? 'on' : ''} onClick={() => setSec(k)}><Ico n={i} s={17} />{l}</button>)}
-      <div className="sgh">MORE</div>{SET_MORE.map(([screen, l, i]) => <button key={screen} onClick={() => go && go(screen)}><Ico n={i} s={17} />{l}<em><Ico n="chevr" s={14} /></em></button>)}</nav>
+    <p className={cssForms.ssub}>Shop setup, staff, tills, printing and safety</p>
+    <div className={cssSettings.slayout}><nav className={cssSettings.snav}>{SET_NAV.map(([k, l, i]) => <button key={k} className={sec === k ? 'on' : ''} onClick={() => setSec(k)}><Ico n={i} s={17} />{l}</button>)}
+      <div className={cssSettings.sgh}>MORE</div>{SET_MORE.map(([screen, l, i]) => <button key={screen} onClick={() => go && go(screen)}><Ico n={i} s={17} />{l}<em><Ico n="chevr" s={14} /></em></button>)}</nav>
       <div className="smain">{body}</div>
-      {sec === 'shop' && <div className="spanel prev"><div className="sph"><b>Receipt preview</b></div><div className="spb"><div className="receipt" style={{ position: 'static', margin: '0 auto' }}>
-        {shop.logo && <div className="rc"><img src={shop.logo} alt="" style={{ maxWidth: '90%' }} /></div>}<div className="rc big">{shop.name}</div><div className="rc sm">{shop.address}<br />{shop.phone}</div><hr />
-        <div className="rl sm"><span>Invoice · Cash</span></div><div className="rl sm"><span>#{shop.till || 'T11'}-00001</span><span>{new Date().toLocaleDateString('en-GB')}</span></div><hr />
-        <div className="rl sm"><span>SAMPLE ITEM</span><span>1 · 280 · 280</span></div><hr /><div className="rl big"><span>Net Amount</span><span>Rs 280</span></div><hr /><div className="rc sm">{shop.footer}</div></div></div></div>}
+      {sec === 'shop' && <div className={`${cssSettings.spanel} ${cssSettings.prev}`}><div className={cssSettings.sph}><b>Receipt preview</b></div><div className={cssSettings.spb}><div className={cssReceipt.receipt} style={{ position: 'static', margin: '0 auto' }}>
+        {shop.logo && <div className={cssReceipt.rc}><img src={shop.logo} alt="" style={{ maxWidth: '90%' }} /></div>}<div className={`${cssReceipt.rc} big`}>{shop.name}</div><div className={`${cssReceipt.rc} sm`}>{shop.address}<br />{shop.phone}</div><hr />
+        <div className={`${cssReceipt.rl} sm`}><span>Invoice · Cash</span></div><div className={`${cssReceipt.rl} sm`}><span>#{shop.till || 'T11'}-00001</span><span>{new Date().toLocaleDateString('en-GB')}</span></div><hr />
+        <div className={`${cssReceipt.rl} sm`}><span>SAMPLE ITEM</span><span>1 · 280 · 280</span></div><hr /><div className={`${cssReceipt.rl} big`}><span>Net Amount</span><span>Rs 280</span></div><hr /><div className={`${cssReceipt.rc} sm`}>{shop.footer}</div></div></div></div>}
     </div>
-    {edit && <div className="modal" onClick={() => setEdit(null)}><div className="mbox" onClick={(e) => e.stopPropagation()}>
+    {edit && <div className={cssModals.modal} onClick={() => setEdit(null)}><div className={cssModals.mbox} onClick={(e) => e.stopPropagation()}>
       <b style={{ fontSize: 16 }}>{edit.id ? 'Edit staff' : 'Add staff'}</b>
-      <div className="sgrid"><div className="full"><label>Name</label><input value={edit.name} onChange={(e) => setEdit({ ...edit, name: e.target.value })} /></div>
+      <div className={cssSettings.sgrid}><div className={cssSettings.full}><label>Name</label><input value={edit.name} onChange={(e) => setEdit({ ...edit, name: e.target.value })} /></div>
         <div><label>Username</label><input value={edit.username} onChange={(e) => setEdit({ ...edit, username: e.target.value.toLowerCase() })} /></div>
         <div><label>Role</label><select value={edit.role} onChange={(e) => setEdit({ ...edit, role: e.target.value })}>{ROLES.map((r) => <option key={r}>{r}</option>)}</select></div>
-        <div className="full"><label>{edit.id ? 'New PIN / password (leave blank to keep)' : 'PIN / password'}</label><input type="password" value={edit.password} onChange={(e) => setEdit({ ...edit, password: e.target.value })} /></div>
+        <div className={cssSettings.full}><label>{edit.id ? 'New PIN / password (leave blank to keep)' : 'PIN / password'}</label><input type="password" value={edit.password} onChange={(e) => setEdit({ ...edit, password: e.target.value })} /></div>
         <div><label>Daily discount limit (Rs)</label><input type="number" min="0" placeholder="No limit" value={edit.dailyDiscountLimit ?? ''} onChange={(e) => setEdit({ ...edit, dailyDiscountLimit: e.target.value })} /></div>
         <div><label>Credit sale limit (Rs)</label><input type="number" min="0" placeholder="No limit" value={edit.creditLimit ?? ''} onChange={(e) => setEdit({ ...edit, creditLimit: e.target.value })} /></div>
-        {edit.id && <label className="full"><input type="checkbox" style={{ width: 'auto' }} checked={edit.active !== false} onChange={(e) => setEdit({ ...edit, active: e.target.checked })} /> Active</label>}</div>
+        {edit.id && <label className={cssSettings.full}><input type="checkbox" style={{ width: 'auto' }} checked={edit.active !== false} onChange={(e) => setEdit({ ...edit, active: e.target.checked })} /> Active</label>}</div>
       {err && <span style={{ color: '#b91c1c' }}>{err}</span>}
-      <div className="btns" style={{ justifyContent: 'flex-end' }}><button onClick={() => setEdit(null)}>Cancel</button><button className="pri" onClick={saveStaff}>Save</button></div></div></div>}
+      <div className={cssButtons.btns} style={{ justifyContent: 'flex-end' }}><button onClick={() => setEdit(null)}>Cancel</button><button className="pri" onClick={saveStaff}>Save</button></div></div></div>}
   </div>;
 }
 const SettingsAt = (sec) => function SettingsSection(p) { return <Settings {...p} section={sec} />; };
@@ -1094,9 +1098,9 @@ function KeysPanel({ uid }) {
   return <Panel title="Keyboard shortcuts" sub="Your own keys. Other users keep theirs." action={<button onClick={resetAll}><Ico n="refresh" s={15} /> Reset all</button>}>
     <p style={{ margin: '0 0 8px' }}>Click a key, then press the new key or combination (Esc cancels). One action keeps the same key on every screen, and two actions can't share a key where both work. Enter, Esc, Tab, the arrows and Delete keep their jobs.</p>
     {err && <p className="rerr" role="alert">{err}</p>}
-    {groups.map((g) => <div key={g}><div className="sgh">{g.toUpperCase()}</div><table style={{ width: '100%' }}><thead><tr><th>ACTION</th><th>WORKS ON</th><th style={{ width: 200 }}>KEY</th></tr></thead>
+    {groups.map((g) => <div key={g}><div className={cssSettings.sgh}>{g.toUpperCase()}</div><table style={{ width: '100%' }}><thead><tr><th>ACTION</th><th>WORKS ON</th><th style={{ width: 200 }}>KEY</th></tr></thead>
       <tbody>{ACTIONS.filter((a) => a[2] === g).map((a) => <tr key={a[0]}><td>{a[1]}</td><td><small>{a[4]}</small></td>
-        <td><kbd className={'keybtn' + (cap === a[0] ? ' cap' : '')} role="button" tabIndex="0" onClick={() => { setCap(a[0]); setErr(''); }}>{cap === a[0] ? 'Press a key…' : keys[a[0]]}</kbd>
+        <td><kbd className={cssSettings.keybtn + (cap === a[0] ? ' cap' : '')} role="button" tabIndex="0" onClick={() => { setCap(a[0]); setErr(''); }}>{cap === a[0] ? 'Press a key…' : keys[a[0]]}</kbd>
           {keys[a[0]] !== DEFKEYS[a[0]] && <button title="Back to default" style={{ marginLeft: 6 }} onClick={() => { const n = { ...keys, [a[0]]: DEFKEYS[a[0]] }; setKeys(n); saveKeys(uid, n); }}>{<Ico n="refresh" s={14} />}</button>}</td></tr>)}</tbody></table></div>)}
   </Panel>;
 }
@@ -1118,27 +1122,27 @@ function BillTemplate({ go }) {
   const aligns = ['logo', 'name', 'address', 'phone', 'title', 'footer', 'text'];
   const onKey = (e) => { if (e.altKey && e.key === 'ArrowUp') { e.preventDefault(); move(cur, -1); } else if (e.altKey && e.key === 'ArrowDown') { e.preventDefault(); move(cur, 1); } else if (e.key === 'ArrowUp') { e.preventDefault(); setCur(Math.max(0, cur - 1)); } else if (e.key === 'ArrowDown') { e.preventDefault(); setCur(Math.min(tpl.blocks.length - 1, cur + 1)); } else if (e.key === ' ' && !b.locked) { e.preventDefault(); upd({ show: b.show === false }); } };
   return <div>
-    <p className="ssub">Choose a block, then change its wording and style. <kbd className="mini">↑↓</kbd> choose · <kbd className="mini">Alt+↑↓</kbd> move · <kbd className="mini">Space</kbd> show/hide · <kbd className="mini">F9</kbd> save. Applies to sales bills; return slips keep the standard layout.</p>
-    <div className="btgrid">
-      <div className="spanel"><div className="sph"><b>BILL BLOCKS (TOP TO BOTTOM)</b></div>
-        <div className="btlist" tabIndex="0" onKeyDown={onKey}>{tpl.blocks.map((x, i) => <div key={x.id} className={'btrow' + (i === cur ? ' on' : '')} onClick={() => setCur(i)}>
+    <p className={cssForms.ssub}>Choose a block, then change its wording and style. <kbd className={cssSettings.mini}>↑↓</kbd> choose · <kbd className={cssSettings.mini}>Alt+↑↓</kbd> move · <kbd className={cssSettings.mini}>Space</kbd> show/hide · <kbd className={cssSettings.mini}>F9</kbd> save. Applies to sales bills; return slips keep the standard layout.</p>
+    <div className={cssSettings.btgrid}>
+      <div className={cssSettings.spanel}><div className={cssSettings.sph}><b>BILL BLOCKS (TOP TO BOTTOM)</b></div>
+        <div className={cssSettings.btlist} tabIndex="0" onKeyDown={onKey}>{tpl.blocks.map((x, i) => <div key={x.id} className={cssSettings.btrow + (i === cur ? ' on' : '')} onClick={() => setCur(i)}>
           <input type="checkbox" style={{ width: 'auto' }} checked={x.show !== false} disabled={x.locked} onChange={(e) => setTpl({ ...tpl, blocks: tpl.blocks.map((y, j) => (j === i ? { ...y, show: e.target.checked } : y)) })} />
           <span className="grow">{BT_NAMES[x.type]}</span><button onClick={(e) => { e.stopPropagation(); move(i, -1); }} disabled={i === 0}>↑</button><button onClick={(e) => { e.stopPropagation(); move(i, 1); }} disabled={i === tpl.blocks.length - 1}>↓</button>
           {(x.type === 'divider' || x.type === 'text') ? <button title="Delete" onClick={(e) => { e.stopPropagation(); del(i); }}>{<Ico n="trash" s={15} />}</button> : <span style={{ width: 28 }} />}</div>)}</div>
-        <div className="spf"><button onClick={() => add('text')}><Ico n="plus" s={15} /> Text line</button><button onClick={() => add('divider')}>— Divider</button><small className="grow" style={{ textAlign: 'right' }}>Adds below the chosen block</small></div></div>
-      <div className="spanel"><div className="sph"><div><b>{BT_NAMES[b.type]}</b><small>{{ logo: 'The shop logo from Settings, when one is uploaded.', name: 'Shop name from Settings.', address: 'Address from Settings.', phone: 'Phone from Settings.', divider: 'A separator line.', title: 'Use {mode} to print Cash or Credit.', billno: 'Always printed.', cashier: 'Who made the bill.', customer: 'Who the bill is for.', items: 'Always printed.', totals: 'Always printed.', cash: 'Cash received and change.', footer: 'Leave blank to use the footer from Settings.', text: 'Your own line of text.' }[b.type]}</small></div></div>
-        <div className="spb sgrid">
-          {b.type === 'logo' && <div className="full"><label>Logo size · {b.size || 80}% of the bill's width</label><input type="range" min="20" max="100" value={b.size || 80} onChange={(e) => upd({ size: +e.target.value })} style={{ padding: 0 }} /></div>}
-          {aligns.includes(b.type) && <div className="full"><label>Alignment</label><Seg value={b.align || 'center'} onChange={(v) => upd({ align: v })} opts={[['left', 'Left'], ['center', 'Centre'], ['right', 'Right']]} /></div>}
-          {['title', 'cashier', 'customer', 'cash', 'footer', 'text'].includes(b.type) && <div className="full"><label>{b.type === 'cash' ? 'Wording: cash received' : 'Wording'}</label><input value={b.text || ''} placeholder={b.type === 'footer' ? 'Uses the Settings footer' : ''} onChange={(e) => upd({ text: e.target.value })} /></div>}
-          {b.type === 'cash' && <div className="full"><label>Wording: change</label><input value={b.text2 || ''} onChange={(e) => upd({ text2: e.target.value })} /></div>}
-          {['name', 'footer', 'text'].includes(b.type) && <label className="full"><input type="checkbox" style={{ width: 'auto' }} checked={!!b.big} onChange={(e) => upd({ big: e.target.checked })} /> Larger text</label>}
-          {!b.locked && <label className="full"><input type="checkbox" style={{ width: 'auto' }} checked={b.show !== false} onChange={(e) => upd({ show: e.target.checked })} /> Print this block</label>}</div>
-        <div className="spf"><small>Paper width ({shop.paper === '58' ? '58' : '80'} mm), logo, shop details and the standard footer are set in TOOLS → Settings.</small></div></div>
-      <div className="spanel"><div className="sph"><b>PREVIEW</b><span className="grow" /><span className="seg"><button className={tpl.lines === 'dotted' ? 'on' : ''} onClick={() => setTpl({ ...tpl, lines: 'dotted' })}>Dotted</button><button className={tpl.lines !== 'dotted' ? 'on' : ''} onClick={() => setTpl({ ...tpl, lines: 'solid' })}>Solid</button></span></div>
-        <div className="spb" style={{ background: '#f2f4f8' }}><div className="receipt" style={{ ...paperVars(shop), position: 'static', margin: '0 auto' }}><BillBody pr={sample} shop={shop} tpl={tpl} /></div></div></div>
+        <div className={cssSettings.spf}><button onClick={() => add('text')}><Ico n="plus" s={15} /> Text line</button><button onClick={() => add('divider')}>— Divider</button><small className="grow" style={{ textAlign: 'right' }}>Adds below the chosen block</small></div></div>
+      <div className={cssSettings.spanel}><div className={cssSettings.sph}><div><b>{BT_NAMES[b.type]}</b><small>{{ logo: 'The shop logo from Settings, when one is uploaded.', name: 'Shop name from Settings.', address: 'Address from Settings.', phone: 'Phone from Settings.', divider: 'A separator line.', title: 'Use {mode} to print Cash or Credit.', billno: 'Always printed.', cashier: 'Who made the bill.', customer: 'Who the bill is for.', items: 'Always printed.', totals: 'Always printed.', cash: 'Cash received and change.', footer: 'Leave blank to use the footer from Settings.', text: 'Your own line of text.' }[b.type]}</small></div></div>
+        <div className={`${cssSettings.spb} ${cssSettings.sgrid}`}>
+          {b.type === 'logo' && <div className={cssSettings.full}><label>Logo size · {b.size || 80}% of the bill's width</label><input type="range" min="20" max="100" value={b.size || 80} onChange={(e) => upd({ size: +e.target.value })} style={{ padding: 0 }} /></div>}
+          {aligns.includes(b.type) && <div className={cssSettings.full}><label>Alignment</label><Seg value={b.align || 'center'} onChange={(v) => upd({ align: v })} opts={[['left', 'Left'], ['center', 'Centre'], ['right', 'Right']]} /></div>}
+          {['title', 'cashier', 'customer', 'cash', 'footer', 'text'].includes(b.type) && <div className={cssSettings.full}><label>{b.type === 'cash' ? 'Wording: cash received' : 'Wording'}</label><input value={b.text || ''} placeholder={b.type === 'footer' ? 'Uses the Settings footer' : ''} onChange={(e) => upd({ text: e.target.value })} /></div>}
+          {b.type === 'cash' && <div className={cssSettings.full}><label>Wording: change</label><input value={b.text2 || ''} onChange={(e) => upd({ text2: e.target.value })} /></div>}
+          {['name', 'footer', 'text'].includes(b.type) && <label className={cssSettings.full}><input type="checkbox" style={{ width: 'auto' }} checked={!!b.big} onChange={(e) => upd({ big: e.target.checked })} /> Larger text</label>}
+          {!b.locked && <label className={cssSettings.full}><input type="checkbox" style={{ width: 'auto' }} checked={b.show !== false} onChange={(e) => upd({ show: e.target.checked })} /> Print this block</label>}</div>
+        <div className={cssSettings.spf}><small>Paper width ({shop.paper === '58' ? '58' : '80'} mm), logo, shop details and the standard footer are set in TOOLS → Settings.</small></div></div>
+      <div className={cssSettings.spanel}><div className={cssSettings.sph}><b>PREVIEW</b><span className="grow" /><span className={cssButtons.seg}><button className={tpl.lines === 'dotted' ? 'on' : ''} onClick={() => setTpl({ ...tpl, lines: 'dotted' })}>Dotted</button><button className={tpl.lines !== 'dotted' ? 'on' : ''} onClick={() => setTpl({ ...tpl, lines: 'solid' })}>Solid</button></span></div>
+        <div className={cssSettings.spb} style={{ background: '#f2f4f8' }}><div className={cssReceipt.receipt} style={{ ...paperVars(shop), position: 'static', margin: '0 auto' }}><BillBody pr={sample} shop={shop} tpl={tpl} /></div></div></div>
     </div>
-    <div className="btns" style={{ justifyContent: 'flex-end', marginTop: 10 }}><span className="ok grow">{msg}</span>
+    <div className={cssButtons.btns} style={{ justifyContent: 'flex-end', marginTop: 10 }}><span className="ok grow">{msg}</span>
       <button onClick={() => { const t = JSON.parse(JSON.stringify(BT_DEFAULT)); setTpl(t); setCur(0); setMsg(''); }}><Ico n="refresh" s={15} /> Restore default</button><button disabled={!dirty} onClick={() => { setTpl(JSON.parse(orig)); setMsg(''); }}>Reset</button>
       <button className="pri" disabled={!dirty} onClick={save}>Save F9</button><button onClick={() => go('Sales Invoice')}>Close</button></div>
   </div>;
@@ -1158,12 +1162,12 @@ function Backup() {
     setMsg({ ok: 'Restored. Reloading…' }); setTimeout(() => (window.location.href = '/'), 1200);
   };
   return <div style={{ maxWidth: 900, margin: '0 auto' }}>
-    <div className="spanel"><div className="sph"><div><b>Back up your data</b><small>One file with products, bills, returns, purchases, staff and settings. Keep copies off this PC (USB or email).</small></div>
-      <a className="btnlike" style={{ marginLeft: 'auto' }} href="/api/backup" onClick={() => setTimeout(load, 800)}><Ico n="down" s={15} /> Download backup</a></div>
-      <div className="spb"><table style={{ width: '100%' }}><thead><tr><th>WHAT</th><th className="num">RECORDS</th></tr></thead>
+    <div className={cssSettings.spanel}><div className={cssSettings.sph}><div><b>Back up your data</b><small>One file with products, bills, returns, purchases, staff and settings. Keep copies off this PC (USB or email).</small></div>
+      <a className={cssButtons.btnlike} style={{ marginLeft: 'auto' }} href="/api/backup" onClick={() => setTimeout(load, 800)}><Ico n="down" s={15} /> Download backup</a></div>
+      <div className={cssSettings.spb}><table style={{ width: '100%' }}><thead><tr><th>WHAT</th><th className="num">RECORDS</th></tr></thead>
         <tbody>{Object.entries(info.counts).map(([k, v]) => <tr key={k}><td style={{ textTransform: 'capitalize' }}>{k}</td><td className="num">{v}</td></tr>)}</tbody></table><small>Storage: {info.mode === 'mongo' ? 'MongoDB' : 'JSON file (data/db.json)'}</small></div></div>
-    <div className="spanel" style={{ marginTop: 14 }}><div className="sph"><div><b>Restore from a backup</b><small>Replaces everything on this PC with the file's contents. A copy of the current data is kept first (JSON mode).</small></div></div>
-      <div className="spb" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+    <div className={cssSettings.spanel} style={{ marginTop: 14 }}><div className={cssSettings.sph}><div><b>Restore from a backup</b><small>Replaces everything on this PC with the file's contents. A copy of the current data is kept first (JSON mode).</small></div></div>
+      <div className={cssSettings.spb} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         <input type="file" accept=".json,application/json" onChange={(e) => { setFile(e.target.files[0] || null); setMsg(null); }} />
         <div><label>Type RESTORE to confirm</label><input value={word} onChange={(e) => setWord(e.target.value)} style={{ maxWidth: 240 }} /></div>
         <div><button className="pri" disabled={!file || word !== 'RESTORE'} onClick={restore}>Restore data</button></div>
@@ -1181,8 +1185,8 @@ function Updates() {
     if (admin && url !== i.updateUrl) { const s = (await api('settings')).find((x) => x.id === 'shop') || { id: 'shop' }; await api('settings/shop', 'PUT', { ...s, updateUrl: url.trim() }); setI({ ...i, updateUrl: url.trim() }); }
     setRes(await api('update', 'POST')); setBusy(false);
   };
-  return <div style={{ maxWidth: 900, margin: '0 auto' }}><div className="spanel"><div className="sph"><div><b>Falcon Next</b><small>Installed on this PC</small></div></div>
-    <div className="spb"><div style={{ display: 'flex', alignItems: 'center', gap: 16 }}><div><small style={{ fontWeight: 700, letterSpacing: 1 }}>CURRENT VERSION</small><div className="mono" style={{ fontSize: 26, fontWeight: 700 }}>{i.version}</div>
+  return <div style={{ maxWidth: 900, margin: '0 auto' }}><div className={cssSettings.spanel}><div className={cssSettings.sph}><div><b>Falcon Next</b><small>Installed on this PC</small></div></div>
+    <div className={cssSettings.spb}><div style={{ display: 'flex', alignItems: 'center', gap: 16 }}><div><small style={{ fontWeight: 700, letterSpacing: 1 }}>CURRENT VERSION</small><div className="mono" style={{ fontSize: 26, fontWeight: 700 }}>{i.version}</div>
       <small>{!res ? 'Not checked yet' : res.error ? '' : res.newer ? `Version ${res.latest} is available` : 'You have the latest version ✓'}</small></div><span className="grow" /><button className="pri" disabled={busy} onClick={check}><Ico n="refresh" s={15} /> {busy ? 'Checking…' : 'Check for updates'}</button></div>
       {res?.error && <p className="rerr">{res.error}</p>}
       {res?.newer && <p>{res.notes && <>{res.notes}<br /></>}{res.url && <a href={res.url} target="_blank" rel="noreferrer">Download version {res.latest}</a>}</p>}
@@ -1193,48 +1197,42 @@ function Support() {
   const [i, setI] = useState(null), [ok, setOk] = useState(false);
   useEffect(() => { api('update').then(setI); }, []);
   const diag = i ? `Falcon Next ${i.version} · till ${i.till} · ${i.mode === 'mongo' ? 'MongoDB' : 'JSON'} · Node ${i.node}\nProducts ${i.counts.products}, sales ${i.counts.sales}, returns ${i.counts.returns}, purchases ${i.counts.purchases}, staff ${i.counts.users}\n${navigator.userAgent}` : '';
-  return <div style={{ maxWidth: 700, margin: '0 auto' }}><div className="spanel"><div className="sph"><div><b>Software support</b><small>Call or message for help</small></div></div>
-    <div className="spb" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      <div style={{ fontSize: 18 }}><b>Abdul Rahman</b></div>
-      <div><a className="btnlike" href="tel:03296195286"><Ico n="headset" s={15} /> 0329-6195286</a> <a className="btnlike" href="https://wa.me/923296195286" target="_blank" rel="noreferrer"><Ico n="headset" s={15} /> WhatsApp</a></div>
+  return <div style={{ maxWidth: 700, margin: '0 auto' }}><div className={cssSettings.spanel}><div className={cssSettings.sph}><div><b>Software support</b><small>Call or message for help</small></div></div>
+    <div className={cssSettings.spb} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ fontSize: 18 }}><b>Muhammad Hasnain</b></div>
+      <div><a className={cssButtons.btnlike} href="tel:03203981259"><Ico n="headset" s={15} /> 0320-3981259</a> <a className={cssButtons.btnlike} href="https://wa.me/923203981259" target="_blank" rel="noreferrer"><Ico n="headset" s={15} /> WhatsApp</a></div>
       <small>When you call, tell them what you pressed and what the screen said. This box helps them:</small>
       <textarea readOnly rows="4" value={diag} /><div><button onClick={() => { navigator.clipboard?.writeText(diag); setOk(true); }}><Ico n="copy" s={15} /> Copy details</button> {ok && <span className="ok">Copied ✓</span>}</div></div></div></div>;
 }
 
 // ---------- Purchase ----------
 function PurchaseReceipt({ pr, shop }) {
-  return <div className="receipt" style={paperVars(shop)}>
-    {shop.logo && <div className="rc"><img src={shop.logo} alt="" style={{ width: '70%' }} /></div>}
-    <div className="rc big">{shop.name}</div><hr />
-    <div className="rc sm">Purchase · {pr.type === 'CASH' ? 'Cash' : 'Credit'}</div>
-    <div className="rl sm"><span>#{pr.purchaseNo}</span><span>{pr.date}</span></div>
-    <div className="rl sm"><span>Supplier</span><span>{pr.supplier}</span></div>
-    {pr.invoiceNo && <div className="rl sm"><span>Their bill</span><span>{pr.invoiceNo}</span></div>}<hr />
-    <div className="rl sm b"><span>DESCRIPTION</span><span>QTY+FOC · PRICE · VALUE</span></div>
-    {pr.items.map((x, i) => <div className="rl sm" key={i}><span>{x.name}</span><span>{x.qty}{x.foc ? `+${x.foc}` : ''} · {x.price} · {Math.round(x.value)}</span></div>)}<hr />
-    <div className="rl b"><span>Total Bill</span><span>{Math.round(pr.subtotal)}</span></div>
-    {(pr.discount1 + pr.discount2) > 0 && <div className="rl sm"><span>Discount</span><span>{Math.round(pr.discount1 + pr.discount2)}</span></div>}
-    {pr.gst > 0 && <div className="rl sm"><span>GST {pr.gstPct}%</span><span>{Math.round(pr.gst)}</span></div>}
-    {pr.expenses > 0 && <div className="rl sm"><span>Expenses</span><span>{Math.round(pr.expenses)}</span></div>}
-    <div className="rl big"><span>Payable</span><span>Rs {Math.round(pr.total)}</span></div><hr /><div className="rc sm">Stock received · {pr.user}</div>
+  return <div className={cssReceipt.receipt} style={paperVars(shop)}>
+    {shop.logo && <div className={cssReceipt.rc}><img src={shop.logo} alt="" style={{ width: '70%' }} /></div>}
+    <div className={`${cssReceipt.rc} big`}>{shop.name}</div><hr />
+    <div className={`${cssReceipt.rc} sm`}>Purchase · {pr.type === 'CASH' ? 'Cash' : 'Credit'}</div>
+    <div className={`${cssReceipt.rl} sm`}><span>#{pr.purchaseNo}</span><span>{pr.date}</span></div>
+    <div className={`${cssReceipt.rl} sm`}><span>Supplier</span><span>{pr.supplier}</span></div>
+    {pr.invoiceNo && <div className={`${cssReceipt.rl} sm`}><span>Their bill</span><span>{pr.invoiceNo}</span></div>}<hr />
+    <div className={`${cssReceipt.rl} sm b`}><span>DESCRIPTION</span><span>QTY+FOC · PRICE · VALUE</span></div>
+    {pr.items.map((x, i) => <div className={`${cssReceipt.rl} sm`} key={i}><span>{x.name}</span><span>{x.qty}{x.foc ? `+${x.foc}` : ''} · {x.price} · {Math.round(x.value)}</span></div>)}<hr />
+    <div className={`${cssReceipt.rl} b`}><span>Total Bill</span><span>{Math.round(pr.subtotal)}</span></div>
+    {(pr.discount1 + pr.discount2) > 0 && <div className={`${cssReceipt.rl} sm`}><span>Discount</span><span>{Math.round(pr.discount1 + pr.discount2)}</span></div>}
+    {pr.gst > 0 && <div className={`${cssReceipt.rl} sm`}><span>GST {pr.gstPct}%</span><span>{Math.round(pr.gst)}</span></div>}
+    {pr.expenses > 0 && <div className={`${cssReceipt.rl} sm`}><span>Expenses</span><span>{Math.round(pr.expenses)}</span></div>}
+    <div className={`${cssReceipt.rl} big`}><span>Payable</span><span>Rs {Math.round(pr.total)}</span></div><hr /><div className={`${cssReceipt.rc} sm`}>Stock received · {pr.user}</div>
   </div>;
 }
 
 function PurchaseReturnReceipt({ pr, shop }) {
-  return <div className="receipt" style={paperVars(shop)}>
-    {shop.logo && <div className="rc"><img src={shop.logo} alt="" style={{ width: '70%' }} /></div>}
-    <div className="rc big">{shop.name}</div><hr /><div className="rc sm">Purchase Return · {pr.type === 'CASH' ? 'Cash refund' : 'Credit note'}</div>
-    <div className="rl sm">
-      <span>#{pr.returnNo}</span>
-      <span>{pr.date}</span></div>
-      <div className="rl sm">
-        <span>Supplier</span>
-        <span>{pr.supplier}</span>
-        </div>{pr.invoiceNo && <div className="rl sm"><span>Their bill</span><span>{pr.invoiceNo}</span></div>}<hr />
-    <div className="rl sm b"><span>DESCRIPTION</span><span>QTY+FOC · PRICE · VALUE</span></div>
-    {pr.items.map((x, i) => <div key={i}><div className="rl sm"><span>{x.name}</span><span>{x.qty}{x.foc ? `+${x.foc}` : ''} · {x.price} · {Math.round(x.value)}</span></div>{x.reason !== 'No reason' && <div className="rc sm" style={{ textAlign: 'left' }}>({x.reason})</div>}</div>)}<hr />
-    <div className="rl b"><span>Total Bill</span><span>{Math.round(pr.subtotal)}</span></div>{pr.discount > 0 && <div className="rl sm"><span>Discount</span><span>{Math.round(pr.discount)}</span></div>}
-    <div className="rl big"><span>Refund due</span><span>Rs {Math.round(pr.total)}</span></div><hr /><div className="rc sm">Stock sent back · {pr.user}</div></div>;
+  return <div className={cssReceipt.receipt} style={paperVars(shop)}>
+    {shop.logo && <div className={cssReceipt.rc}><img src={shop.logo} alt="" style={{ width: '70%' }} /></div>}
+    <div className={`${cssReceipt.rc} big`}>{shop.name}</div><hr /><div className={`${cssReceipt.rc} sm`}>Purchase Return · {pr.type === 'CASH' ? 'Cash refund' : 'Credit note'}</div>
+    <div className={`${cssReceipt.rl} sm`}><span>#{pr.returnNo}</span><span>{pr.date}</span></div><div className={`${cssReceipt.rl} sm`}><span>Supplier</span><span>{pr.supplier}</span></div>{pr.invoiceNo && <div className={`${cssReceipt.rl} sm`}><span>Their bill</span><span>{pr.invoiceNo}</span></div>}<hr />
+    <div className={`${cssReceipt.rl} sm b`}><span>DESCRIPTION</span><span>QTY+FOC · PRICE · VALUE</span></div>
+    {pr.items.map((x, i) => <div key={i}><div className={`${cssReceipt.rl} sm`}><span>{x.name}</span><span>{x.qty}{x.foc ? `+${x.foc}` : ''} · {x.price} · {Math.round(x.value)}</span></div>{x.reason !== 'No reason' && <div className={`${cssReceipt.rc} sm`} style={{ textAlign: 'left' }}>({x.reason})</div>}</div>)}<hr />
+    <div className={`${cssReceipt.rl} b`}><span>Total Bill</span><span>{Math.round(pr.subtotal)}</span></div>{pr.discount > 0 && <div className={`${cssReceipt.rl} sm`}><span>Discount</span><span>{Math.round(pr.discount)}</span></div>}
+    <div className={`${cssReceipt.rl} big`}><span>Refund due</span><span>Rs {Math.round(pr.total)}</span></div><hr /><div className={`${cssReceipt.rc} sm`}>Stock sent back · {pr.user}</div></div>;
 }
 const PREASONS = ['No reason', 'Expired', 'Damaged', 'Wrong item', 'Customer changed mind', 'Other'];
 
@@ -1304,68 +1302,66 @@ function PurchaseInvoice({ onClose, ret }) {
   // one set of column widths, shared by the entry row and the items table so they line up exactly
   const W = ret ? [52, 110, 0, 84, 72, 104, 80, 118, 170, 76] : [52, 130, 0, 84, 72, 104, 80, 118, 104, 76];
   const gtc = [W[0] + W[1] + 'px', 'minmax(0,1fr)', ...W.slice(3).map((w) => w + 'px')].join(' ');
-  const cell = (label, el) => <div className="ecell"><label>{label}</label>{el}</div>, enter = (e) => e.key === 'Enter' && sel && addLine();
+  const cell = (label, el) => <div className={cssPurchase.ecell}><label>{label}</label>{el}</div>, enter = (e) => e.key === 'Enter' && sel && addLine();
   const num2 = (v) => rs2(v).replace('Rs ', '');
-  const fType = <div className="hf" style={{ width: 150 }}><label>Type ({KEYS.pType})</label><button className={'typebtn ' + type} title={ret ? 'CASH: the supplier refunds cash. CREDIT: taken off what you owe them.' : 'CASH: paid now. CREDIT: added to what you owe the supplier.'} onClick={() => setType(type === 'CASH' ? 'CREDIT' : 'CASH')}>{type}<small>{KEYS.pType} to switch</small></button></div>;
-  const fSup = <div className="hf grow2"><label>Supplier ({KEYS.supplier})</label><input ref={supRef} list="sups" placeholder="Title of account" value={supplier} onChange={(e) => setSupplier(e.target.value)} /><datalist id="sups">{suppliers.map((s) => <option key={s} value={s} />)}</datalist></div>;
-  const fInv = <div className="hf" style={{ width: 170 }}><label>{ret ? 'Their bill #' : 'Invoice No.'}</label><input placeholder="From their bill" value={inv} onChange={(e) => setInv(e.target.value)} /></div>;
-  const fDate = <div className="hf" style={{ width: 170 }}><label>{ret ? 'Return Date' : 'Invoice Date'}</label><input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></div>;
-  const fRem = <div className="hf grow2"><label>Remarks</label><input value={remarks} onChange={(e) => setRemarks(e.target.value)} /></div>;
-  const info = (l, v) => <div className="pinfo"><label>{l}</label><input readOnly value={v} /></div>;
-  const trow = (label, el, cls) => <div className={'trow ' + (cls || '')}><span>{label}</span>{el}</div>;
+  const fType = <div className={`${cssPurchase.hf} hf`} style={{ width: 150 }}><label>Type ({KEYS.pType})</label><button className={`${cssButtons.typebtn} ` + type} title={ret ? 'CASH: the supplier refunds cash. CREDIT: taken off what you owe them.' : 'CASH: paid now. CREDIT: added to what you owe the supplier.'} onClick={() => setType(type === 'CASH' ? 'CREDIT' : 'CASH')}>{type}<small>{KEYS.pType} to switch</small></button></div>;
+  const fSup = <div className={`${cssPurchase.hf} hf grow2`}><label>Supplier ({KEYS.supplier})</label><input ref={supRef} list="sups" placeholder="Title of account" value={supplier} onChange={(e) => setSupplier(e.target.value)} /><datalist id="sups">{suppliers.map((s) => <option key={s} value={s} />)}</datalist></div>;
+  const fInv = <div className={`${cssPurchase.hf} hf`} style={{ width: 170 }}><label>{ret ? 'Their bill #' : 'Invoice No.'}</label><input placeholder="From their bill" value={inv} onChange={(e) => setInv(e.target.value)} /></div>;
+  const fDate = <div className={`${cssPurchase.hf} hf`} style={{ width: 170 }}><label>{ret ? 'Return Date' : 'Invoice Date'}</label><input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></div>;
+  const fRem = <div className={`${cssPurchase.hf} hf grow2`}><label>Remarks</label><input value={remarks} onChange={(e) => setRemarks(e.target.value)} /></div>;
+  const info = (l, v) => <div className={cssPurchase.pinfo}><label>{l}</label><input readOnly value={v} /></div>;
+  const trow = (label, el, cls) => <div className={`${cssPurchase.trow} ` + (cls || '')}><span>{label}</span>{el}</div>;
   const tinput = (v, set, max) => <input type="number" min="0" max={max} value={v} placeholder="0.00" onChange={(e) => set(e.target.value)} />;
   return <>
     <h2 className="ptitle">Purchase {ret ? 'Return' : ''} No. {no}</h2>
-    <div className="inv pform">
+    <div className={`${cssLayout.inv} ${cssForms.pform}`}>
       <p className="hint"><kbd>↑↓</kbd> move · <kbd>Enter</kbd> change an item · <kbd>Del</kbd> remove · <kbd>{KEYS.save}</kbd> save · {ret ? 'stock goes back to the supplier' : 'stock comes in, the supplier gets paid or credited'}</p>
-      {!ret && <div className="phdr">{fType}{fSup}{fInv}{fDate}{fRem}</div>}
-      <div className="entry3" style={{ gridTemplateColumns: gtc }}>
+      <div className={cssPurchase.phdr}>{fType}{fSup}{fInv}{fDate}{fRem}</div>
+      <div className={cssPurchase.entry3} style={{ gridTemplateColumns: gtc }}>
         {cell(`SKU/BARCODE (${KEYS.barcode})`, <input ref={codeRef} className="mono" placeholder="Scan or ID" value={code} onChange={(e) => setCode(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && scan()} />)}
-        <div className="ecell"><label>PRODUCT NAME</label><div className="pnwrap">
-          <input className="pn" title={name} placeholder="Type the product name" value={name} onChange={(e) => { setName(e.target.value); setSel(null); setHi(0); }} onKeyDown={(e) => {
+        <div className={cssPurchase.ecell}><label>PRODUCT NAME</label><div className={cssPurchase.pnwrap}>
+          <input className={cssPurchase.pn} title={name} placeholder="Type the product name" value={name} onChange={(e) => { setName(e.target.value); setSel(null); setHi(0); }} onKeyDown={(e) => {
             if (!hits.length) { if (e.key === 'ArrowDown' && lines.length && !name) { e.preventDefault(); setRow(0); listRef.current?.focus(); } return; }
             if (e.key === 'ArrowDown') { e.preventDefault(); setHi((h) => (h + 1) % hits.length); } else if (e.key === 'ArrowUp') { e.preventDefault(); setHi((h) => (h - 1 + hits.length) % hits.length); }
-            else if (e.key === 'Enter') { e.preventDefault(); pick(hits[Math.min(hi, hits.length - 1)]); } else if (e.key === 'Escape') { e.stopPropagation(); setName(''); }
-          }} />
-          <button type="button" className="catbtn" tabIndex="-1" onClick={() => setCat(true)}><Ico n="box" s={14} /> Catalogue ({KEYS.catalogue})</button>
-          {hits.length > 0 && <div className="hits wide">{hits.map((p, i) => <div key={p.id} className={'hit' + (i === hi ? ' on' : '')} onMouseDown={() => pick(p)}><span>{p.name}</span><small>stock {p.stock} {p.unit}</small></div>)}</div>}</div></div>
+            else if (e.key === 'Enter') { e.preventDefault(); pick(hits[Math.min(hi, hits.length - 1)]); } else if (e.key === 'Escape') { e.stopPropagation(); setName(''); } }} />
+          <button type="button" className={cssPurchase.catbtn} tabIndex="-1" onClick={() => setCat(true)}><Ico n="box" s={14} /> Catalogue ({KEYS.catalogue})</button>
+          {hits.length > 0 && <div className={`${cssModals.hits} wide`}>{hits.map((p, i) => <div key={p.id} className={cssModals.hit + (i === hi ? ' on' : '')} onMouseDown={() => pick(p)}><span>{p.name}</span><small>stock {p.stock} {p.unit}</small></div>)}</div>}</div></div>
         {cell('QTY', <input ref={qtyRef} type="number" min="0" value={qty} onChange={(e) => setQty(e.target.value)} onKeyDown={enter} />)}
         {cell('FOC', <input type="number" min="0" value={foc} onChange={(e) => setFoc(e.target.value)} onKeyDown={enter} />)}
         {cell(ret ? 'UNIT PRICE' : 'PRICE', <input type="number" min="0" value={price} onChange={(e) => setPrice(e.target.value)} onKeyDown={enter} />)}
         {cell('DISC %', <input type="number" min="0" max="100" value={disc} onChange={(e) => setDisc(e.target.value)} onKeyDown={enter} />)}
         {cell('NET VALUE', <input readOnly className="ro" value={num2(entryVal)} />)}
         {ret ? cell('REASON', <select value={PREASONS.includes(reason) ? reason : 'No reason'} onChange={(e) => setReason(e.target.value)}>{PREASONS.map((r) => <option key={r}>{r}</option>)}</select>) : cell('SALE PRICE', <input type="number" min="0" value={sale} onChange={(e) => setSale(e.target.value)} onKeyDown={enter} />)}
-        <div className="ecell"><label>&nbsp;</label><button className="pri addb" onClick={addLine}>{editAt != null ? 'Update' : 'Add'}</button></div>
+        <div className={cssPurchase.ecell}><label>&nbsp;</label><button className={`pri ${cssPurchase.addb}`} onClick={addLine}>{editAt != null ? 'Update' : 'Add'}</button></div>
       </div>
-      <div className="rlines" tabIndex="0" ref={listRef} onKeyDown={listKey}>
-        <table className="ptab2"><colgroup>{W.map((w, i) => <col key={i} style={w ? { width: w } : undefined} />)}</colgroup>
+      <div className={cssTables.rlines} tabIndex="0" ref={listRef} onKeyDown={listKey}>
+        <table className={cssPurchase.ptab2}><colgroup>{W.map((w, i) => <col key={i} style={w ? { width: w } : undefined} />)}</colgroup>
           <thead><tr><th>SR</th><th>SKU/CODE</th><th>DESCRIPTION</th><th className="num">QTY</th><th className="num">FOC</th><th className="num">PRICE</th><th className="num">DISC</th><th className="num">VALUE</th>{ret ? <th>REASON</th> : <th className="num">S/RATE</th>}<th></th></tr></thead>
           <tbody>{lines.length === 0 && <tr><td colSpan="10" className="empty"><Ico n="truck" s={30} /><br />No items yet. Scan or type the items on their bill; choose the supplier ({KEYS.supplier}) any time before saving.</td></tr>}
             {lines.map((x, i) => <tr key={i} className={(i === row ? 'sel ' : '') + (i === editAt ? 'editing' : '')} onClick={() => { setRow(i); listRef.current?.focus(); }} onDoubleClick={() => edit(i)}>
-              <td>{i + 1}</td><td className="mono">{x.code}</td><td className="descc"><b>{x.name}</b></td><td className="num">{qf(x.qty)}</td><td className="num">{x.foc || 0}</td><td className="num">{num2(x.price)}</td><td className="num">{x.disc || 0}</td><td className="num">{num2(val(x))}</td>
+              <td>{i + 1}</td><td className="mono">{x.code}</td><td className={cssPurchase.descc}><b>{x.name}</b></td><td className="num">{qf(x.qty)}</td><td className="num">{x.foc || 0}</td><td className="num">{num2(x.price)}</td><td className="num">{x.disc || 0}</td><td className="num">{num2(val(x))}</td>
               {ret ? <td>{x.reason}</td> : <td className="num">{x.salePrice ? num2(x.salePrice) : '—'}</td>}
               <td className="act"><button title="Remove (Del)" aria-label={`Remove ${x.name}`} onClick={(e) => { e.stopPropagation(); remove(i); }}><Ico n="x" s={12} /></button></td></tr>)}</tbody></table>
       </div>
-      <div className="status"><span>{lines.length} items · {units} units</span>{gst > 0 && <span>GST {gst}% is added to the bill</span>}</div>
-      <div className="pbottom">
-        <div className="pleft">
-          {ret && <div className="phdr stack"><div className="hrow">{fType}{fSup}{fDate}</div><div className="hrow">{fInv}{fRem}</div></div>}
-          <div className="pbal"><div><span>Prev. Bal.</span><b>Rs {num2(owed)}</b></div><div><span>This Bill</span><b>Rs {num2(payable)}</b></div><div className="pay"><span>{ret ? 'Total Payable' : 'Payable'}</span><b>Rs {num2(payTotal)}</b></div></div>
-          <div className="pinfos4">{info('Stock', sel ? `${sel.stock ?? 0} ${sel.unit || ''}` : '—')}{info(`Price + GST${gst ? ' ' + gst + '%' : ''}`, sel ? num2((+price || 0) * (1 + gst / 100)) : '—')}{info('Avg. Price', avg == null ? '—' : num2(avg))}{info('FOC Ratio', +foc > 0 && +qty > 0 ? `${foc} : ${qty}` : '—')}</div>
+      <div className={cssTables.status}><span>{lines.length} items · {units} units</span>{gst > 0 && <span>GST {gst}% is added to the bill</span>}</div>
+      <div className={cssPurchase.pbottom}>
+        <div className={cssPurchase.pleft}>
+          <div className={cssPurchase.pbal}><div><span>Prev. Bal.</span><b>Rs {num2(owed)}</b></div><div><span>This Bill</span><b>Rs {num2(payable)}</b></div><div className="pay"><span>{ret ? 'Total Payable' : 'Payable'}</span><b>Rs {num2(payTotal)}</b></div></div>
+          <div className={cssPurchase.pinfos4}>{info('Stock', sel ? `${sel.stock ?? 0} ${sel.unit || ''}` : '—')}{info(`Price + GST${gst ? ' ' + gst + '%' : ''}`, sel ? num2((+price || 0) * (1 + gst / 100)) : '—')}{info('Avg. Price', avg == null ? '—' : num2(avg))}{info('FOC Ratio', +foc > 0 && +qty > 0 ? `${foc} : ${qty}` : '—')}</div>
         </div>
-        <div className="pright">
-          <div className="ptot">
+        <div className={cssPurchase.pright}>
+          <div className={cssPurchase.ptot}>
             {trow(ret ? 'TOTAL AMOUNT' : 'TOTAL BILL', <i>{num2(sub)}</i>, 'red')}
             {ret ? <>{trow('FLAT DISCOUNT (RS)', tinput(d1, setD1))}{trow('DISCOUNT (%)', tinput(d2, setD2, 100))}{trow('NET AMOUNT (REFUND DUE)', <i className="net">{num2(payable)}</i>, 'blue')}</> : <>
               {trow('DISCOUNT-1', tinput(d1, setD1))}{trow('DISCOUNT-2', tinput(d2, setD2))}{gst > 0 && trow(`GST ${gst}%`, <i>{num2(g)}</i>)}{trow('EXPENSES', tinput(exp, setExp), 'red')}{trow('PAYABLE', <i className="net">{num2(payable)}</i>, 'blue')}</>}
           </div>
-          <div className="btns pbtns"><button onClick={() => reset()}>Clear <kbd>{KEYS.clear}</kbd></button><button disabled={!lines.length || busy} onClick={() => save(true)}><Ico n="print" s={15} /> Save & Print <kbd>{KEYS.savePrint}</kbd></button><button className="pri" disabled={!lines.length || busy} onClick={() => save(false)}>Save <kbd>{KEYS.save}</kbd></button><button onClick={onClose}>Close</button></div>
+          <div className={`${cssButtons.btns} ${cssPurchase.pbtns}`}><button onClick={() => reset()}>Clear <kbd>{KEYS.clear}</kbd></button><button disabled={!lines.length || busy} onClick={() => save(true)}><Ico n="print" s={15} /> Save & Print <kbd>{KEYS.savePrint}</kbd></button><button className="pri" disabled={!lines.length || busy} onClick={() => save(false)}>Save <kbd>{KEYS.save}</kbd></button><button onClick={onClose}>Close</button></div>
           {msg && <p className={msg.e ? 'rerr' : 'ok'} role={msg.e ? 'alert' : undefined}>{msg.e || msg.ok}</p>}
         </div>
       </div>
     </div>
-    {cat && <div className="modal" onClick={() => setCat(false)}><div className="mbox wide" onClick={(e) => e.stopPropagation()}><b>Product Catalogue</b><input autoFocus placeholder="Search products" value={cq} onChange={(e) => setCq(e.target.value)} />
-      <div className="mlist">{prods.filter((p) => p.name.toLowerCase().includes(cq.toLowerCase())).map((p) => <div key={p.id} className="hit cat" onClick={() => { pick(p); setCq(''); }}><span>{p.name}</span><small>cost {rs(p.costPrice || 0)} · stock {p.stock} {p.unit}</small></div>)}</div></div></div>}
+    {cat && <div className={cssModals.modal} onClick={() => setCat(false)}><div className={`${cssModals.mbox} wide`} onClick={(e) => e.stopPropagation()}><b>Product Catalogue</b><input autoFocus placeholder="Search products" value={cq} onChange={(e) => setCq(e.target.value)} />
+      <div className={cssModals.mlist}>{prods.filter((p) => p.name.toLowerCase().includes(cq.toLowerCase())).map((p) => <div key={p.id} className={`${cssModals.hit} ${cssModals.cat}`} onClick={() => { pick(p); setCq(''); }}><span>{p.name}</span><small>cost {rs(p.costPrice || 0)} · stock {p.stock} {p.unit}</small></div>)}</div></div></div>}
     {pr && (ret ? <PurchaseReturnReceipt pr={pr} shop={shop} /> : <PurchaseReceipt pr={pr} shop={shop} />)}
   </>;
 }
@@ -1391,12 +1387,12 @@ function PurHistory({ ret, onClose }) {
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([t])); a.download = (ret ? 'purchase-return-history' : 'purchase-history') + '.csv'; a.click();
   };
   const head = <tr><th>VOUCHER</th><th>DATED</th><th>MODE</th><th>TITLE OF A/C</th><th>BILL #</th><th className="num">ITEMS</th><th className="num">AMOUNT</th><th>REMARKS</th><th>USER</th></tr>;
-  const line = (p) => <><td className="mono">{noOf(p)}</td><td>{dd(p.date)}</td><td><span className={'tag ' + (tType(p) === 'CASH' ? 'Create' : 'Credit')}>{tType(p) === 'CASH' ? 'Cash' : 'Credit'}</span></td><td className="wrapc"><b>{p.supplier}</b></td><td>{p.invoiceNo}</td><td className="num">{p.items.length}</td><td className="num"><b>{n2(p.total)}</b></td><td className="wrapc">{p.remarks}</td><td>{p.user}</td></>;
+  const line = (p) => <><td className="mono">{noOf(p)}</td><td>{dd(p.date)}</td><td><span className={`${cssTables.tag} ` + (tType(p) === 'CASH' ? 'Create' : 'Credit')}>{tType(p) === 'CASH' ? 'Cash' : 'Credit'}</span></td><td className={cssPurchase.wrapc}><b>{p.supplier}</b></td><td>{p.invoiceNo}</td><td className="num">{p.items.length}</td><td className="num"><b>{n2(p.total)}</b></td><td className={cssPurchase.wrapc}>{p.remarks}</td><td>{p.user}</td></>;
   const doPrint = (x) => { setPr(x); setTimeout(() => { window.print(); setPr(null); }, 150); };
   const set = (k, v) => setF({ ...f, [k]: v }), enter = (e) => e.key === 'Enter' && apply();
-  return <div className="phx">
-    <fieldset className="fs wide"><legend>Search Criteria</legend>
-      <div className="cvrow" style={{ alignItems: 'flex-end' }}>
+  return <div className={`${cssPurchase.phx} phx`}>
+    <fieldset className={`${cssForms.fs} wide`}><legend>Search Criteria</legend>
+      <div className={cssForms.cvrow} style={{ alignItems: 'flex-end' }}>
         <div><label>From</label><input type="date" value={f.from} onChange={(e) => { set('from', e.target.value); setChip(''); }} onKeyDown={enter} style={{ width: 160 }} /></div>
         <div><label>To</label><input type="date" value={f.to} onChange={(e) => { set('to', e.target.value); setChip(''); }} onKeyDown={enter} style={{ width: 160 }} /></div>
         <button style={{ width: 70 }} onClick={() => apply()}>OK</button>
@@ -1405,18 +1401,18 @@ function PurHistory({ ret, onClose }) {
         <div style={{ width: 110 }}><label>Invoice To</label><input type="number" min="0" value={f.iTo} onChange={(e) => set('iTo', +e.target.value)} onKeyDown={enter} style={{ textAlign: 'center' }} /></div>
         <div style={{ width: 120 }}><label>Mode</label><select value={f.mode} onChange={(e) => set('mode', e.target.value)}><option value="">All</option><option value="CASH">Cash</option><option value="CREDIT">Credit</option></select></div>
         <button onClick={() => apply()}><Ico n="search" s={15} /> Search</button><button onClick={clear}>Clear</button></div>
-      <div className="quick"><small>Quick range</small>{Object.keys(chips).map((k) => <button key={k} className={'chip sq' + (chip === k ? ' on' : '')} onClick={() => pickChip(k)}>{k}</button>)}</div></fieldset>
-    <div className="vl phgrid"><table className="phtable"><thead>{head}</thead><tbody>
+      <div className={cssPurchase.quick}><small>Quick range</small>{Object.keys(chips).map((k) => <button key={k} className={`${cssButtons.chip} sq` + (chip === k ? ' on' : '')} onClick={() => pickChip(k)}>{k}</button>)}</div></fieldset>
+    <div className={`${cssTables.vl} ${cssPurchase.phgrid}`}><table className={cssPurchase.phtable}><thead>{head}</thead><tbody>
       {rows.length === 0 && <tr><td colSpan="9" className="empty"><Ico n="clip" s={30} /><br /><b>Nothing in this range</b></td></tr>}
       {shown.map((p) => <tr key={p.id} onClick={() => setDet(p)}>{line(p)}</tr>)}</tbody></table></div>
-    <div className="rfoot"><span>{rows.length} {ret ? 'return' : 'voucher'}{rows.length === 1 ? '' : 's'} · Total Rs {n2(total)}</span><span className="grow" />{pages > 1 && <span className="pgr"><button disabled={pg === 0} onClick={() => setPage(pg - 1)}>Previous</button> Page {pg + 1} of {pages} <button disabled={pg >= pages - 1} onClick={() => setPage(pg + 1)}>Next</button></span>}</div>
-    <div className="btns"><button onClick={load}><Ico n="refresh" s={15} /> Refresh <kbd>{KEYS.refresh}</kbd></button><button disabled={!rows.length} onClick={csv}><Ico n="down" s={15} /> CSV</button><button onClick={() => setPdf(true)}><Ico n="file" s={15} /> View in PDF Mode</button><button disabled={!rows.length} onClick={() => { setPdf(true); setTimeout(() => window.print(), 250); }}><Ico n="print" s={15} /> Print</button><button onClick={onClose}>Close</button></div>
-    {det && <div className="modal" onClick={() => setDet(null)}><div className="mbox wide" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}><div className="mhead"><b className="mono" style={{ fontSize: 18 }}>{noOf(det)}</b><button className="px" aria-label="Close" onClick={() => setDet(null)}><Ico n="x" s={14} /></button></div>
+    <div className={cssTables.rfoot}><span>{rows.length} {ret ? 'return' : 'voucher'}{rows.length === 1 ? '' : 's'} · Total Rs {n2(total)}</span><span className="grow" />{pages > 1 && <span className={cssPurchase.pgr}><button disabled={pg === 0} onClick={() => setPage(pg - 1)}>Previous</button> Page {pg + 1} of {pages} <button disabled={pg >= pages - 1} onClick={() => setPage(pg + 1)}>Next</button></span>}</div>
+    <div className={cssButtons.btns}><button onClick={load}><Ico n="refresh" s={15} /> Refresh <kbd>{KEYS.refresh}</kbd></button><button disabled={!rows.length} onClick={csv}><Ico n="down" s={15} /> CSV</button><button onClick={() => setPdf(true)}><Ico n="file" s={15} /> View in PDF Mode</button><button disabled={!rows.length} onClick={() => { setPdf(true); setTimeout(() => window.print(), 250); }}><Ico n="print" s={15} /> Print</button><button onClick={onClose}>Close</button></div>
+    {det && <div className={cssModals.modal} onClick={() => setDet(null)}><div className={`${cssModals.mbox} wide`} role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}><div className={`${cssModals.mhead} mhead`}><b className="mono" style={{ fontSize: 18 }}>{noOf(det)}</b><button className={cssButtons.px} aria-label="Close" onClick={() => setDet(null)}><Ico n="x" s={14} /></button></div>
       <p style={{ margin: 0 }}>{det.date} · {tType(det) === 'CASH' ? 'Cash' : 'Credit'} · {det.supplier}{det.invoiceNo && ` · their bill ${det.invoiceNo}`} · by {det.user}</p>{det.remarks && <p style={{ margin: 0 }}>Remarks: {det.remarks}</p>}
       <table style={{ width: '100%' }}><thead><tr><th>#</th><th>DESCRIPTION</th><th className="num">QTY</th><th className="num">FOC</th><th className="num">PRICE</th><th className="num">DISC %</th><th className="num">VALUE</th>{ret && <th>REASON</th>}</tr></thead>
-        <tbody>{det.items.map((x, i) => <tr key={i}><td>{i + 1}</td><td className="wrapc">{x.name}</td><td className="num">{qf(x.qty)}</td><td className="num">{x.foc || 0}</td><td className="num">{n2(x.price ?? x.cost)}</td><td className="num">{x.disc || 0}</td><td className="num">{n2(x.value ?? x.qty * x.cost)}</td>{ret && <td>{x.reason}</td>}</tr>)}</tbody></table>
-      <div className="dtot"><div><span>Total Bill</span><i>{n2(det.subtotal)}</i></div>{ret ? <><div><span>Flat discount (Rs)</span><i>{n2(det.discountRs || 0)}</i></div><div><span>Discount (%)</span><i>{n2(det.discountPct || 0)}</i></div></> : <><div><span>Discount-1</span><i>{n2(det.discount1 || 0)}</i></div><div><span>Discount-2</span><i>{n2(det.discount2 || 0)}</i></div>{det.gst > 0 && <div><span>GST {det.gstPct}%</span><i>{n2(det.gst)}</i></div>}<div><span>Expenses</span><i>{n2(det.expenses || 0)}</i></div></>}<div className="b"><span>{ret ? 'Refund due' : 'Payable'}</span><i>{n2(det.total)}</i></div></div>
-      <div className="btns" style={{ justifyContent: 'flex-end' }}><button onClick={() => doPrint(det)}><Ico n="print" s={15} /> Print</button><button className="pri" onClick={() => setDet(null)}>Done</button></div></div></div>}
+        <tbody>{det.items.map((x, i) => <tr key={i}><td>{i + 1}</td><td className={cssPurchase.wrapc}>{x.name}</td><td className="num">{qf(x.qty)}</td><td className="num">{x.foc || 0}</td><td className="num">{n2(x.price ?? x.cost)}</td><td className="num">{x.disc || 0}</td><td className="num">{n2(x.value ?? x.qty * x.cost)}</td>{ret && <td>{x.reason}</td>}</tr>)}</tbody></table>
+      <div className={cssTables.dtot}><div><span>Total Bill</span><i>{n2(det.subtotal)}</i></div>{ret ? <><div><span>Flat discount (Rs)</span><i>{n2(det.discountRs || 0)}</i></div><div><span>Discount (%)</span><i>{n2(det.discountPct || 0)}</i></div></> : <><div><span>Discount-1</span><i>{n2(det.discount1 || 0)}</i></div><div><span>Discount-2</span><i>{n2(det.discount2 || 0)}</i></div>{det.gst > 0 && <div><span>GST {det.gstPct}%</span><i>{n2(det.gst)}</i></div>}<div><span>Expenses</span><i>{n2(det.expenses || 0)}</i></div></>}<div className="b"><span>{ret ? 'Refund due' : 'Payable'}</span><i>{n2(det.total)}</i></div></div>
+      <div className={cssButtons.btns} style={{ justifyContent: 'flex-end' }}><button onClick={() => doPrint(det)}><Ico n="print" s={15} /> Print</button><button className="pri" onClick={() => setDet(null)}>Done</button></div></div></div>}
     {pdf && <div className="preport"><div className="preport-bar"><b>{title} · PDF mode</b><span className="grow" /><button className="pri" onClick={() => window.print()}><Ico n="print" s={15} /> Print / Save as PDF</button><button onClick={() => setPdf(false)}>Close</button></div>
       <div className="preport-page"><h2 style={{ margin: 0 }}>{shop.name || title}</h2><div style={{ color: '#556', marginBottom: 8 }}>{title} · {crit.from} to {crit.to}{ql && ` · "${crit.q}"`}</div>
         <table style={{ width: '100%' }}><thead>{head}</thead><tbody>{rows.map((p) => <tr key={p.id}>{line(p)}</tr>)}</tbody><tfoot><tr><td colSpan="6"><b>Total ({rows.length})</b></td><td className="num"><b>{n2(total)}</b></td><td colSpan="2"></td></tr></tfoot></table></div></div>}
@@ -1433,12 +1429,12 @@ const balTxt = (b) => (!b ? '0.00' : n2(Math.abs(b)) + (b > 0 ? ' Dr' : ' Cr'));
 const vadj = (vch, name) => vch.reduce((t, v) => t + (v.lines || []).filter((l) => String(l.title).toLowerCase() === String(name || '').trim().toLowerCase()).reduce((s, l) => s + (v.kind === 'PAYMENT' ? l.amount : -l.amount), 0), 0);
 
 function VoucherReceipt({ pr, shop }) {
-  return <div className="receipt" style={paperVars(shop)}>
-    <div className="rc big">{shop.name}</div><hr />
-    <div className="rc sm">{pr.kind === 'PAYMENT' ? 'Payment Voucher' : 'Receipt Voucher'}</div>
-    <div className="rl sm"><span>#{pr.voucherNo}</span><span>{pr.date}</span></div>{pr.remarks && <div className="rl sm"><span>Remarks</span><span>{pr.remarks}</span></div>}<hr />
-    {pr.lines.map((l, i) => <div key={i}><div className="rl sm b"><span>{l.title}</span><span>{n2(l.amount)}</span></div><div className="rc sm" style={{ textAlign: 'left' }}>{l.particulars}</div></div>)}<hr />
-    <div className="rl big"><span>Total</span><span>Rs {n2(pr.total)}</span></div><hr /><div className="rc sm">{pr.user}</div>
+  return <div className={cssReceipt.receipt} style={paperVars(shop)}>
+    <div className={`${cssReceipt.rc} big`}>{shop.name}</div><hr />
+    <div className={`${cssReceipt.rc} sm`}>{pr.kind === 'PAYMENT' ? 'Payment Voucher' : 'Receipt Voucher'}</div>
+    <div className={`${cssReceipt.rl} sm`}><span>#{pr.voucherNo}</span><span>{pr.date}</span></div>{pr.remarks && <div className={`${cssReceipt.rl} sm`}><span>Remarks</span><span>{pr.remarks}</span></div>}<hr />
+    {pr.lines.map((l, i) => <div key={i}><div className={`${cssReceipt.rl} sm b`}><span>{l.title}</span><span>{n2(l.amount)}</span></div><div className={`${cssReceipt.rc} sm`} style={{ textAlign: 'left' }}>{l.particulars}</div></div>)}<hr />
+    <div className={`${cssReceipt.rl} big`}><span>Total</span><span>Rs {n2(pr.total)}</span></div><hr /><div className={`${cssReceipt.rc} sm`}>{pr.user}</div>
   </div>;
 }
 
@@ -1493,28 +1489,28 @@ function CashVoucher({ kind }) {
   const codeKey = (e) => { if (e.key === 'Enter') { e.preventDefault(); const a = accts.find((x) => x.code.toLowerCase() === codeIn.trim().toLowerCase()) || list[cur]; if (a) pick(a); } else if (e.key === 'ArrowDown') { e.preventDefault(); setHi((cur + 1) % Math.max(1, list.length)); } };
   return <>
     <h2 className="ptitle">{pay ? 'Payment' : 'Receipt'} Voucher (Multiple Entries) No. {no}</h2>
-    <div className="cv">
-      <div className="cvtop"><span>Voucher No. <b className="mono" style={{ color: 'var(--ac)' }}>{no}</b></span><span className="cih">Cash in hand: <b>{n2(inHand)}</b></span>
+    <div className={cssCash.cv}>
+      <div className={cssCash.cvtop}><span>Voucher No. <b className="mono" style={{ color: 'var(--ac)' }}>{no}</b></span><span className={cssCash.cih}>Cash in hand: <b>{n2(inHand)}</b></span>
         <span className="hint"><kbd>↓</kbd> into the accounts · <kbd>Enter</kbd> pick / next · <kbd>Ctrl+S</kbd> save</span><span className="grow" />
-        <fieldset className="cvsb"><legend>Search by</legend><label><input type="radio" checked={by === 'name'} onChange={() => setBy('name')} /> Account Name</label><label><input type="radio" checked={by === 'code'} onChange={() => setBy('code')} /> Account Code</label></fieldset></div>
-      <div className="cvrow"><div style={{ width: 330 }}><label>Account Category</label><select value={cat} onChange={(e) => { setCat(e.target.value); setHi(0); }}><option>ALL ACCOUNTS</option>{cats.map((c) => <option key={c}>{c}</option>)}</select></div>
+        <fieldset className={cssCash.cvsb}><legend>Search by</legend><label><input type="radio" checked={by === 'name'} onChange={() => setBy('name')} /> Account Name</label><label><input type="radio" checked={by === 'code'} onChange={() => setBy('code')} /> Account Code</label></fieldset></div>
+      <div className={cssForms.cvrow}><div style={{ width: 330 }}><label>Account Category</label><select value={cat} onChange={(e) => { setCat(e.target.value); setHi(0); }}><option>ALL ACCOUNTS</option>{cats.map((c) => <option key={c}>{c}</option>)}</select></div>
         <div style={{ width: 186 }}><label>Search By</label><select value={mode} onChange={(e) => setMode(e.target.value)}><option>Anywhere</option><option>Starts with</option></select></div>
         <div style={{ width: 176 }}><label>Dated</label><input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></div>
         <div className="grow"><label>Remarks</label><input placeholder={pay ? 'e.g. Monthly bills' : 'e.g. Recovery round, Basti'} value={remarks} onChange={(e) => setRemarks(e.target.value)} /></div></div>
-      <div className="cvrow"><div style={{ width: 120 }}><label>A/C Code</label><input ref={codeRef} className="mono" value={codeIn} onChange={(e) => { setCodeIn(e.target.value); setSel(null); setHi(0); }} onKeyDown={codeKey} /></div>
+      <div className={cssForms.cvrow}><div style={{ width: 120 }}><label>A/C Code</label><input ref={codeRef} className="mono" value={codeIn} onChange={(e) => { setCodeIn(e.target.value); setSel(null); setHi(0); }} onKeyDown={codeKey} /></div>
         <div className="grow"><label>Account Name</label><input ref={nameRef} placeholder={pay ? 'Paid to… (type to search)' : 'Received from… (type to search)'} value={nameIn} onChange={(e) => { setNameIn(e.target.value); setSel(null); setHi(0); }} onKeyDown={nameKey} /></div>
         <div style={{ width: 210 }}><label>Account Balance</label><input readOnly style={{ textAlign: 'right', fontWeight: 700 }} value={shown ? balTxt(shown.balance) : ''} /></div></div>
-      <div className="acl" ref={listRef}><table style={{ width: '100%' }}><thead><tr><th style={{ width: 130 }}>A/C CODE</th><th>TITLE OF ACCOUNT</th><th style={{ width: 260 }}>TOWN/CATEGORY</th><th className="num" style={{ width: 170 }}>BALANCE</th></tr></thead>
+      <div className={cssCash.acl} ref={listRef}><table style={{ width: '100%' }}><thead><tr><th style={{ width: 130 }}>A/C CODE</th><th>TITLE OF ACCOUNT</th><th style={{ width: 260 }}>TOWN/CATEGORY</th><th className="num" style={{ width: 170 }}>BALANCE</th></tr></thead>
         <tbody>{list.length === 0 && <tr><td colSpan="4" className="empty">No account matches. Customers and suppliers appear here once they have a bill.</td></tr>}
           {list.map((a, i) => <tr key={a.code} className={i === cur ? 'sel' : ''} onClick={() => { setHi(i); pick(a); }}><td className="mono">{a.code}</td><td><b>{a.title}</b></td><td style={{ color: '#2347b0' }}>{a.category}</td><td className="num">{balTxt(a.balance)}</td></tr>)}</tbody></table></div>
-      <div className="cvrow" style={{ alignItems: 'flex-end' }}><div className="grow"><label>Particulars</label><input ref={partRef} value={part} onChange={(e) => setPart(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && amtRef.current?.focus()} /></div>
-        <div style={{ width: 210 }}><label>Amount</label><div className="unit"><span>Rs</span><input ref={amtRef} type="number" min="0" placeholder="0.00" value={amt} onChange={(e) => setAmt(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addLine()} /></div></div>
+      <div className={cssForms.cvrow} style={{ alignItems: 'flex-end' }}><div className="grow"><label>Particulars</label><input ref={partRef} value={part} onChange={(e) => setPart(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && amtRef.current?.focus()} /></div>
+        <div style={{ width: 210 }}><label>Amount</label><div className={cssForms.unit}><span>Rs</span><input ref={amtRef} type="number" min="0" placeholder="0.00" value={amt} onChange={(e) => setAmt(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addLine()} /></div></div>
         <button className="pri" onClick={addLine}>Add to Voucher</button></div>
-      <div className="vl"><table style={{ width: '100%' }}><thead><tr><th style={{ width: 60 }}>SR.</th><th>TITLE OF ACCOUNT</th><th>PARTICULARS</th><th className="num" style={{ width: 180 }}>AMOUNT</th><th style={{ width: 40 }}></th></tr></thead>
+      <div className={cssTables.vl}><table style={{ width: '100%' }}><thead><tr><th style={{ width: 60 }}>SR.</th><th>TITLE OF ACCOUNT</th><th>PARTICULARS</th><th className="num" style={{ width: 180 }}>AMOUNT</th><th style={{ width: 40 }}></th></tr></thead>
         <tbody>{lines.length === 0 && <tr><td colSpan="5" className="empty" style={{ padding: 40 }}>No lines yet. Pick an account, type the amount and press Enter.</td></tr>}
           {lines.map((l, i) => <tr key={i} className={i === row ? 'sel' : ''} onClick={() => setRow(i)}><td>{i + 1}</td><td><b>{l.title}</b></td><td>{l.particulars}</td><td className="num">{n2(l.amount)}</td><td><button title="Remove" onClick={(e) => { e.stopPropagation(); setLines(lines.filter((_, j) => j !== i)); setRow(-1); }}>✕</button></td></tr>)}</tbody></table></div>
-      <div className="vfoot"><span className="grow" style={{ color: '#b4300f' }}>A/C Balance : {shown ? `${shown.title} · ${balTxt(shown.balance)}` : ''}</span><div className="vtot"><b>TOTAL AMOUNT</b><span>{n2(total)}</span></div></div>
-      <div className="btns"><button onClick={() => reset()}><Ico n="refresh" s={15} /> Reset <kbd>{KEYS.clear}</kbd></button><button disabled={busy || (!lines.length && !(sel && +amt > 0))} onClick={() => save(true)}><Ico n="print" s={15} /> Save & Print <kbd>{KEYS.savePrint}</kbd></button><button className="pri" disabled={busy || (!lines.length && !(sel && +amt > 0))} onClick={() => save(false)}>Save <kbd>Ctrl+S</kbd></button><button onClick={() => window.dispatchEvent(new CustomEvent('falcon-go', { detail: 'Sales Invoice' }))}>Close</button></div>
+      <div className={cssCash.vfoot}><span className="grow" style={{ color: '#b4300f' }}>A/C Balance : {shown ? `${shown.title} · ${balTxt(shown.balance)}` : ''}</span><div className={cssCash.vtot}><b>TOTAL AMOUNT</b><span>{n2(total)}</span></div></div>
+      <div className={cssButtons.btns}><button onClick={() => reset()}><Ico n="refresh" s={15} /> Reset <kbd>{KEYS.clear}</kbd></button><button disabled={busy || (!lines.length && !(sel && +amt > 0))} onClick={() => save(true)}><Ico n="print" s={15} /> Save & Print <kbd>{KEYS.savePrint}</kbd></button><button className="pri" disabled={busy || (!lines.length && !(sel && +amt > 0))} onClick={() => save(false)}>Save <kbd>Ctrl+S</kbd></button><button onClick={() => window.dispatchEvent(new CustomEvent('falcon-go', { detail: 'Sales Invoice' }))}>Close</button></div>
       {msg && <p className={msg.e ? 'rerr' : 'ok'} role={msg.e ? 'alert' : undefined}>{msg.e || msg.ok}</p>}
     </div>
     {pr && <VoucherReceipt pr={pr} shop={shop} />}
@@ -1535,13 +1531,13 @@ function CashBook() {
   const TR = all.reduce((t, r) => t + r.receipt, 0), TP = all.reduce((t, r) => t + r.payment, 0), shR = rows.reduce((t, r) => t + r.receipt, 0), shP = rows.reduce((t, r) => t + r.payment, 0);
   const cell = (v, c) => <td className="num" style={{ color: v ? c : undefined }}>{n2(v)}</td>;
   const table = (cls) => <table style={{ width: '100%' }} className={cls}><thead><tr><th>DOC NO.</th><th>DATED</th><th>TITLE OF A/C</th><th>PARTICULARS</th><th className="num">RECEIPT</th><th className="num">PAYMENT</th></tr></thead>
-    <tbody>{rows.map((r, i) => <tr key={i} className={r.op ? 'cbop' : ''}><td className="mono">{r.doc}</td><td>{dmy(r.date)}</td><td><b>{r.title}</b></td><td>{r.particulars}</td>{cell(r.receipt, '#15803d')}{cell(r.payment, '#b91c1c')}</tr>)}</tbody>
-    <tfoot><tr className="cbtot"><td colSpan="3">CASH IN HAND {dmy(data.to)} ( {n2(TR)} − {n2(TP)} ) = {n2(data.inHand)}</td><td className="num">GRAND TOTAL</td><td className="num">{n2(shR)}</td><td className="num">{n2(shP)}</td></tr></tfoot></table>;
+    <tbody>{rows.map((r, i) => <tr key={i} className={r.op ? cssCash.cbop : ''}><td className="mono">{r.doc}</td><td>{dmy(r.date)}</td><td><b>{r.title}</b></td><td>{r.particulars}</td>{cell(r.receipt, '#15803d')}{cell(r.payment, '#b91c1c')}</tr>)}</tbody>
+    <tfoot><tr className={cssCash.cbtot}><td colSpan="3">CASH IN HAND {dmy(data.to)} ( {n2(TR)} − {n2(TP)} ) = {n2(data.inHand)}</td><td className="num">GRAND TOTAL</td><td className="num">{n2(shR)}</td><td className="num">{n2(shP)}</td></tr></tfoot></table>;
   return <>
-    <div className="cvrow" style={{ alignItems: 'flex-end' }}><div><label>From</label><input type="date" value={from} onChange={(e) => setFrom(e.target.value)} style={{ width: 176 }} /></div><div><label>To</label><input type="date" value={to} onChange={(e) => setTo(e.target.value)} style={{ width: 176 }} /></div>
-      <button style={{ width: 88 }} onClick={apply}>OK</button><button className={only === 'PAY' ? 'chip on' : ''} onClick={() => setOnly(only === 'PAY' ? '' : 'PAY')}>PAYMENTS</button><button className={only === 'REC' ? 'chip on' : ''} onClick={() => setOnly(only === 'REC' ? '' : 'REC')}>RECEIPTS</button></div>
-    <div className="vl" style={{ minHeight: 420 }}>{table('cbt')}</div>
-    <div className="btns"><button id="cb-reset" onClick={reset}><Ico n="refresh" s={15} /> Reset <kbd>{KEYS.refresh}</kbd></button><button onClick={() => setPdf(true)}><Ico n="file" s={15} /> View in PDF Mode</button><button onClick={() => { setPdf(true); setTimeout(() => window.print(), 200); }}><Ico n="print" s={15} /> Print</button><button onClick={() => window.dispatchEvent(new CustomEvent('falcon-go', { detail: 'Sales Invoice' }))}>Close</button></div>
+    <div className={cssForms.cvrow} style={{ alignItems: 'flex-end' }}><div><label>From</label><input type="date" value={from} onChange={(e) => setFrom(e.target.value)} style={{ width: 176 }} /></div><div><label>To</label><input type="date" value={to} onChange={(e) => setTo(e.target.value)} style={{ width: 176 }} /></div>
+      <button style={{ width: 88 }} onClick={apply}>OK</button><button className={only === 'PAY' ? `${cssButtons.chip} on` : ''} onClick={() => setOnly(only === 'PAY' ? '' : 'PAY')}>PAYMENTS</button><button className={only === 'REC' ? `${cssButtons.chip} on` : ''} onClick={() => setOnly(only === 'REC' ? '' : 'REC')}>RECEIPTS</button></div>
+    <div className={cssTables.vl} style={{ minHeight: 420 }}>{table(cssCash.cbt)}</div>
+    <div className={cssButtons.btns}><button id="cb-reset" onClick={reset}><Ico n="refresh" s={15} /> Reset <kbd>{KEYS.refresh}</kbd></button><button onClick={() => setPdf(true)}><Ico n="file" s={15} /> View in PDF Mode</button><button onClick={() => { setPdf(true); setTimeout(() => window.print(), 200); }}><Ico n="print" s={15} /> Print</button><button onClick={() => window.dispatchEvent(new CustomEvent('falcon-go', { detail: 'Sales Invoice' }))}>Close</button></div>
     {pdf && <div className="preport"><div className="preport-bar"><b>Cash Book · PDF mode</b><span className="grow" /><button className="pri" onClick={() => window.print()}><Ico n="print" s={15} /> Print / Save as PDF</button><button onClick={() => setPdf(false)}>Close</button></div>
       <div className="preport-page"><h2 style={{ margin: 0 }}>{shop.name || 'Cash Book'}</h2><div style={{ color: '#556', marginBottom: 8 }}>Cash Book · {dmy(data.from)} to {dmy(data.to)}</div>{table('')}</div></div>}
   </>;
@@ -1572,15 +1568,13 @@ function AreaChart({ labels, series, h = 300 }) {
   const all = series.flatMap((s) => s.values), hi = niceMax(Math.max(0, ...all)), lo = Math.min(0, ...all), span = hi - lo || 1;
   const x = (i) => L + (labels.length < 2 ? iw / 2 : (i * iw) / (labels.length - 1)), y = (v) => T + ih - ((v - lo) / span) * ih;
   const step = Math.max(1, Math.ceil(labels.length / 9)), ticks = [0, 1, 2, 3, 4].map((i) => lo + (span * i) / 4);
-  return <div ref={box} style={{ width: '100%' }}><svg className="achart" width={W} height={h} viewBox={`0 0 ${W} ${h}`} role="img" aria-label="Chart">
-    {ticks.map((v, i) => <g key={i}><line x1={L} x2={W - R} y1={y(v)} y2={y(v)} className="gl" /><text x={L - 8} y={y(v) + 4} className="gt" textAnchor="end">{kfmt(v)}</text></g>)}
-    {labels.map((l, i) => i % step === 0 && <text key={i} x={x(i)} y={h - 8} className="gt" textAnchor={i === 0 ? 'start' : i === labels.length - 1 ? 'end' : 'middle'}>{l}</text>)}
-    {series.map((s, si) => {
-      const pts = s.values.map((v, i) => [x(i), y(v)]), d = smoothPath(pts);
+  return <div ref={box} style={{ width: '100%' }}><svg className={cssDashboard.achart} width={W} height={h} viewBox={`0 0 ${W} ${h}`} role="img" aria-label="Chart">
+    {ticks.map((v, i) => <g key={i}><line x1={L} x2={W - R} y1={y(v)} y2={y(v)} className={cssDashboard.gl} /><text x={L - 8} y={y(v) + 4} className={cssDashboard.gt} textAnchor="end">{kfmt(v)}</text></g>)}
+    {labels.map((l, i) => i % step === 0 && <text key={i} x={x(i)} y={h - 8} className={cssDashboard.gt} textAnchor={i === 0 ? 'start' : i === labels.length - 1 ? 'end' : 'middle'}>{l}</text>)}
+    {series.map((s, si) => { const pts = s.values.map((v, i) => [x(i), y(v)]), d = smoothPath(pts);
       return <g key={s.name}>{si === 0 && pts.length > 1 && <path d={`${d} L${pts[pts.length - 1][0]},${y(Math.max(lo, 0))} L${pts[0][0]},${y(Math.max(lo, 0))}Z`} fill={s.color} opacity=".12" />}
         <path d={d} fill="none" stroke={s.color} strokeWidth="2.6" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
-        {pts.length <= 40 && pts.map((p, i) => <circle key={i} cx={p[0]} cy={p[1]} r="3.4" fill="#fff" stroke={s.color} strokeWidth="2" vectorEffect="non-scaling-stroke"><title>{`${labels[i]} · ${s.name}: Rs ${n2(s.values[i])}`}</title></circle>)}</g>;
-    })}
+        {pts.length <= 40 && pts.map((p, i) => <circle key={i} cx={p[0]} cy={p[1]} r="3.4" fill="#fff" stroke={s.color} strokeWidth="2" vectorEffect="non-scaling-stroke"><title>{`${labels[i]} · ${s.name}: Rs ${n2(s.values[i])}`}</title></circle>)}</g>; })}
   </svg></div>;
 }
 
@@ -1625,11 +1619,9 @@ function Dashboard({ go, me }) {
   const { cur, prev, days, pFrom, pTo, topQty, topRev, heat, low } = calc, keys = Object.keys(days), labels = keys.map(shortDay), hr = new Date().getHours();
   const greet = hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
   const pct = (a, b) => (b ? ((a - b) / Math.abs(b)) * 100 : a ? 100 : 0);
-  const Kpi = ({ title, icon, val, p, p0, money = true, goodUp = true, on, onClick }) => {
-    const d = pct(p, p0), up = d >= 0, good = up === goodUp;
-    return <button className={'kpi' + (on ? ' on' : '')} onClick={onClick}><div className="kh"><span>{title}</span><Ico n={icon} s={16} /></div><div className="kv">{money ? 'Rs ' : ''}{money ? n2(val) : Math.round(val).toLocaleString()}</div>
-      <div className={'kd ' + (good ? 'good' : 'bad')}><Ico n={up ? 'arrowup' : 'arrowdown'} s={12} /> <b>{Math.abs(d).toFixed(1)}%</b> <span>vs previous</span></div></button>;
-  };
+  const Kpi = ({ title, icon, val, p, p0, money = true, goodUp = true, on, onClick }) => { const d = pct(p, p0), up = d >= 0, good = up === goodUp;
+    return <button className={cssDashboard.kpi + (on ? ' on' : '')} onClick={onClick}><div className={cssDashboard.kh}><span>{title}</span><Ico n={icon} s={16} /></div><div className={cssDashboard.kv}>{money ? 'Rs ' : ''}{money ? n2(val) : Math.round(val).toLocaleString()}</div>
+      <div className={`${cssDashboard.kd} ` + (good ? 'good' : 'bad')}><Ico n={up ? 'arrowup' : 'arrowdown'} s={12} /> <b>{Math.abs(d).toFixed(1)}%</b> <span>vs previous</span></div></button>; };
   const avg = cur.bills ? cur.net / cur.bills : 0, avgP = prev.bills ? prev.net / prev.bills : 0;
   const M = { gross: ['Gross sales', 'gross', '#4a5bb5'], disc: ['Discounts', 'disc', '#b7791f'], ret: ['Returns', 'ret', '#b4443a'], net: ['Net sales', 'net', 'var(--ac)'] };
   const appEl = typeof document !== 'undefined' && document.querySelector('.app'), accent = (appEl && getComputedStyle(appEl).getPropertyValue('--ac').trim()) || '#2f7d4f';
@@ -1640,15 +1632,15 @@ function Dashboard({ go, me }) {
   const ccTot = cur.cash + cur.credit || 1, maxQ = Math.max(1, ...topQty.map((x) => x.qty)), maxR = Math.max(1, ...topRev.map((x) => x.rev)), hmax = Math.max(1, ...heat.flat());
   const hours = Array.from({ length: 17 }, (_, i) => i + 6), hl = (h) => (h === 6 ? '6a' : h === 9 ? '9a' : h === 12 ? '12p' : h === 15 ? '3p' : h === 18 ? '6p' : h === 21 ? '9p' : '');
   const expDays = data.shop.expiryDays ?? 3;
-  return <div className="dash">
-    <p className="ssub" style={{ margin: '0 0 12px' }}>{preset === '7' ? 'Last 7 days' : preset === '15' ? 'Last 15 days' : preset === '30' ? 'Last 30 days' : preset === 'm' ? `Last ${months} month${months > 1 ? 's' : ''}` : 'Custom range'} · {shortDay(from)} – {shortDay(to)} · figures from this till’s data, updated live</p>
-    <div className="card drange">
-      <div className="seg">{[['7', 'Last 7 days'], ['15', 'Last 15 days'], ['30', 'Last 30 days']].map(([k, l]) => <button key={k} className={preset === k ? 'on' : ''} onClick={() => pickDays(+k)}>{l}</button>)}</div>
-      <div className={'seg months' + (preset === 'm' ? ' act' : '')}><span>Last</span><button onClick={() => pickMonths(months - 1)} aria-label="Fewer months">−</button><b>{months}</b><button onClick={() => pickMonths(months + 1)} aria-label="More months">+</button><span>months</span></div>
-      <div className="dr"><Ico n="cal" s={16} /><input type="date" value={draft[0]} onChange={(e) => setDraft([e.target.value, draft[1]])} /><span>→</span><input type="date" value={draft[1]} onChange={(e) => setDraft([draft[0], e.target.value])} />
+  return <div className={cssDashboard.dash}>
+    <p className={cssForms.ssub} style={{ margin: '0 0 12px' }}>{preset === '7' ? 'Last 7 days' : preset === '15' ? 'Last 15 days' : preset === '30' ? 'Last 30 days' : preset === 'm' ? `Last ${months} month${months > 1 ? 's' : ''}` : 'Custom range'} · {shortDay(from)} – {shortDay(to)} · figures from this till’s data, updated live</p>
+    <div className={`${cssSurfaces.card} ${cssDashboard.drange}`}>
+      <div className={cssButtons.seg}>{[['7', 'Last 7 days'], ['15', 'Last 15 days'], ['30', 'Last 30 days']].map(([k, l]) => <button key={k} className={preset === k ? 'on' : ''} onClick={() => pickDays(+k)}>{l}</button>)}</div>
+      <div className={`${cssButtons.seg} months` + (preset === 'm' ? ' act' : '')}><span>Last</span><button onClick={() => pickMonths(months - 1)} aria-label="Fewer months">−</button><b>{months}</b><button onClick={() => pickMonths(months + 1)} aria-label="More months">+</button><span>months</span></div>
+      <div className={cssSurfaces.dr}><Ico n="cal" s={16} /><input type="date" value={draft[0]} onChange={(e) => setDraft([e.target.value, draft[1]])} /><span>→</span><input type="date" value={draft[1]} onChange={(e) => setDraft([draft[0], e.target.value])} />
         <button onClick={() => { const [a, b] = draft[0] <= draft[1] ? draft : [draft[1], draft[0]]; setRange(a, b, 'c'); }}>Apply</button></div>
       <span className="grow" /><small>Compared with {shortDay(pFrom)} – {shortDay(pTo)}</small></div>
-    <div className="kpis">
+    <div className={cssDashboard.kpis}>
       <Kpi title="Net sales" icon="trend" val={cur.net} p={cur.net} p0={prev.net} on={!profitGraph && metric === 'net'} onClick={() => { setProfitGraph(false); setMetric('net'); }} />
       <Kpi title="Gross sales" icon="cart" val={cur.gross} p={cur.gross} p0={prev.gross} on={!profitGraph && metric === 'gross'} onClick={() => { setProfitGraph(false); setMetric('gross'); }} />
       <Kpi title="Discounts given" icon="tag" val={cur.disc} p={cur.disc} p0={prev.disc} goodUp={false} on={!profitGraph && metric === 'disc'} onClick={() => { setProfitGraph(false); setMetric('disc'); }} />
@@ -1656,26 +1648,26 @@ function Dashboard({ go, me }) {
       <Kpi title="Transactions" icon="receipt" val={cur.bills} p={cur.bills} p0={prev.bills} money={false} />
       <Kpi title="Average basket" icon="wallet" val={avg} p={avg} p0={avgP} />
     </div>
-    <div className="dgrid">
-      <div className="card"><div className="ch"><div><b>{title}</b><small>{sub}</small></div><span className="grow" />
-        <div className="seg sm">{[['gross', 'Gross'], ['disc', 'Discounts'], ['ret', 'Returns'], ['net', 'Net'], ['cc', 'Cash vs Credit']].map(([k, l]) => <button key={k} className={!profitGraph && metric === k ? 'on' : ''} onClick={() => { setProfitGraph(false); setMetric(k); }}>{l}</button>)}</div></div>
-        <div className="cb">{series.length > 1 && <div className="legend">{series.map((s) => <span key={s.name}><i style={{ background: s.color }} />{s.name}</span>)}</div>}<AreaChart labels={labels} series={series} /></div></div>
-      <div className="dside">
-        <div className="card pad"><b>Cash vs credit</b><div className="ccbar"><i style={{ width: (cur.cash / ccTot) * 100 + '%' }} /></div>
-          <div className="cc2"><div><span className="dot" style={{ background: 'var(--ac)' }} /> Cash<b>Rs {n2(cur.cash)}</b><small>{cur.cashBills.toLocaleString()} bills</small></div><div><span className="dot" style={{ background: '#1f8a8a' }} /> Credit<b>Rs {n2(cur.credit)}</b><small>{cur.creditBills.toLocaleString()} bills</small></div></div></div>
-        <div className="card pad"><div className="ch" style={{ padding: 0, border: 0 }}><b>Profit</b><span className="grow" /><button className="lnk" onClick={() => setProfitGraph(!profitGraph)}>{profitGraph ? 'Hide graph' : 'Show graph'}</button></div>
-          <div className="pv">Rs {n2(cur.profit)}</div><small>{cur.net ? ((cur.profit / cur.net) * 100).toFixed(1) : '0.0'}% of net sales</small>
-          <div className="cc2"><div><span className="dot" style={{ background: '#2b6cb0' }} /> On cash<b>Rs {n2(cur.pCash)}</b></div><div><span className="dot" style={{ background: '#b4443a' }} /> On credit<b>Rs {n2(cur.pCredit)}</b></div></div></div>
-        <div className="card pad"><div className="att"><Ico n="warn" s={18} /><b>Needs attention</b></div>
-          {[['Low stock items', low, low ? 'warn' : 'ok', () => go('Define Products')], [`Expiring within ${expDays} days`, 0, 'ok', () => go('Define Products')], ['Held sales waiting', data.pending.length, data.pending.length ? 'warn' : 'ok', () => go('Pending Entries')]].map(([l, v, c, f]) => <button key={l} className="arow" onClick={f}><span>{l}</span><i className={'pill ' + c}>{v.toLocaleString()}</i></button>)}</div>
+    <div className={cssDashboard.dgrid}>
+      <div className={cssSurfaces.card}><div className={cssDashboard.ch}><div><b>{title}</b><small>{sub}</small></div><span className="grow" />
+        <div className={`${cssButtons.seg} sm`}>{[['gross', 'Gross'], ['disc', 'Discounts'], ['ret', 'Returns'], ['net', 'Net'], ['cc', 'Cash vs Credit']].map(([k, l]) => <button key={k} className={!profitGraph && metric === k ? 'on' : ''} onClick={() => { setProfitGraph(false); setMetric(k); }}>{l}</button>)}</div></div>
+        <div className={cssDashboard.cb}>{series.length > 1 && <div className={cssDashboard.legend}>{series.map((s) => <span key={s.name}><i style={{ background: s.color }} />{s.name}</span>)}</div>}<AreaChart labels={labels} series={series} /></div></div>
+      <div className={cssDashboard.dside}>
+        <div className={`${cssSurfaces.card} pad`}><b>Cash vs credit</b><div className={cssDashboard.ccbar}><i style={{ width: (cur.cash / ccTot) * 100 + '%' }} /></div>
+          <div className={cssDashboard.cc2}><div><span className={cssDashboard.dot} style={{ background: 'var(--ac)' }} /> Cash<b>Rs {n2(cur.cash)}</b><small>{cur.cashBills.toLocaleString()} bills</small></div><div><span className={cssDashboard.dot} style={{ background: '#1f8a8a' }} /> Credit<b>Rs {n2(cur.credit)}</b><small>{cur.creditBills.toLocaleString()} bills</small></div></div></div>
+        <div className={`${cssSurfaces.card} pad`}><div className={cssDashboard.ch} style={{ padding: 0, border: 0 }}><b>Profit</b><span className="grow" /><button className={cssButtons.lnk} onClick={() => setProfitGraph(!profitGraph)}>{profitGraph ? 'Hide graph' : 'Show graph'}</button></div>
+          <div className={cssDashboard.pv}>Rs {n2(cur.profit)}</div><small>{cur.net ? ((cur.profit / cur.net) * 100).toFixed(1) : '0.0'}% of net sales</small>
+          <div className={cssDashboard.cc2}><div><span className={cssDashboard.dot} style={{ background: '#2b6cb0' }} /> On cash<b>Rs {n2(cur.pCash)}</b></div><div><span className={cssDashboard.dot} style={{ background: '#b4443a' }} /> On credit<b>Rs {n2(cur.pCredit)}</b></div></div></div>
+        <div className={`${cssSurfaces.card} pad`}><div className={cssDashboard.att}><Ico n="warn" s={18} /><b>Needs attention</b></div>
+          {[['Low stock items', low, low ? 'warn' : 'ok', () => go('Define Products')], [`Expiring within ${expDays} days`, 0, 'ok', () => go('Define Products')], ['Held sales waiting', data.pending.length, data.pending.length ? 'warn' : 'ok', () => go('Pending Entries')]].map(([l, v, c, f]) => <button key={l} className={cssDashboard.arow} onClick={f}><span>{l}</span><i className={`${cssDashboard.pill} ` + c}>{v.toLocaleString()}</i></button>)}</div>
       </div>
     </div>
-    <div className="d3">
-      {[['Top 5 by quantity sold', topQty, (x) => x.qty.toLocaleString(), (x) => x.qty / maxQ], ['Top 5 by revenue', topRev, (x) => 'Rs ' + n2(x.rev), (x) => x.rev / maxR]].map(([t, rows, f, w]) => <div className="card" key={t}><div className="ch"><b>{t}</b></div>
-        <div className="cb">{rows.length === 0 && <p className="soon">No sales in this range.</p>}{rows.map((x, i) => <div className="top" key={x.name}><span className="rk">{i + 1}</span><div className="grow"><div className="tl"><span>{x.name}</span><b>{f(x)}</b></div><div className="tb"><i style={{ width: Math.max(3, w(x) * 100) + '%' }} /></div></div></div>)}</div></div>)}
-      <div className="card"><div className="ch"><div><b>Busy hours</b><small>Net sales by hour and weekday. Helps plan staff and baking.</small></div></div>
-        <div className="cb heat"><div className="hh"><span />{hours.map((h) => <span key={h}>{hl(h)}</span>)}</div>
-          {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((dn, r) => <div className="hrow" key={dn}><span>{dn}</span>{hours.map((h) => { const v = heat[r][h]; return <i key={h} title={`${dn} ${h}:00 · Rs ${n2(v)}`} style={{ background: v ? `color-mix(in srgb, var(--ac) ${12 + (v / hmax) * 88}%, #fff)` : undefined }} />; })}</div>)}</div></div>
+    <div className={cssDashboard.d3}>
+      {[['Top 5 by quantity sold', topQty, (x) => x.qty.toLocaleString(), (x) => x.qty / maxQ], ['Top 5 by revenue', topRev, (x) => 'Rs ' + n2(x.rev), (x) => x.rev / maxR]].map(([t, rows, f, w]) => <div className={cssSurfaces.card} key={t}><div className={cssDashboard.ch}><b>{t}</b></div>
+        <div className={cssDashboard.cb}>{rows.length === 0 && <p className="soon">No sales in this range.</p>}{rows.map((x, i) => <div className={cssDashboard.top} key={x.name}><span className={cssDashboard.rk}>{i + 1}</span><div className="grow"><div className={cssDashboard.tl}><span>{x.name}</span><b>{f(x)}</b></div><div className={cssDashboard.tb}><i style={{ width: Math.max(3, w(x) * 100) + '%' }} /></div></div></div>)}</div></div>)}
+      <div className={cssSurfaces.card}><div className={cssDashboard.ch}><div><b>Busy hours</b><small>Net sales by hour and weekday. Helps plan staff and baking.</small></div></div>
+        <div className={`${cssDashboard.cb} ${cssDashboard.heat}`}><div className={cssDashboard.hh}><span />{hours.map((h) => <span key={h}>{hl(h)}</span>)}</div>
+          {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((dn, r) => <div className={cssDashboard.hrow} key={dn}><span>{dn}</span>{hours.map((h) => { const v = heat[r][h]; return <i key={h} title={`${dn} ${h}:00 · Rs ${n2(v)}`} style={{ background: v ? `color-mix(in srgb, var(--ac) ${12 + (v / hmax) * 88}%, #fff)` : undefined }} />; })}</div>)}</div></div>
     </div>
   </div>;
 }
@@ -1692,10 +1684,10 @@ function useData(extra = []) {
   return [D, load];
 }
 function RTable({ cols, rows, grand, cls }) {
-  return <table className={'rt ' + (cls || '')}><thead><tr>{cols.map((c) => <th key={c.k} className={c.n ? 'num' : ''}>{c.t}</th>)}</tr></thead>
+  return <table className={`${cssTables.rt} rt ` + (cls || '')}><thead><tr>{cols.map((c) => <th key={c.k} className={c.n ? 'num' : ''}>{c.t}</th>)}</tr></thead>
     <tbody>{rows.length === 0 && <tr><td colSpan={cols.length} className="empty">Nothing to show for this selection.</td></tr>}
-      {rows.map((r, i) => (r._h ? <tr key={i} className="rgh"><td colSpan={cols.length}>{r._h}</td></tr> : <tr key={i} className={r._t ? 'rst' : ''}>{cols.map((c) => <td key={c.k} className={c.n ? 'num' : ''}>{cellText(c, r[c.k])}</td>)}</tr>))}
-      {grand && rows.length > 0 && <tr className="rgt">{cols.map((c, i) => <td key={c.k} className={c.n ? 'num' : ''}>{i === 0 ? 'GRAND TOTAL' : cellText(c, grand[c.k])}</td>)}</tr>}</tbody></table>;
+      {rows.map((r, i) => (r._h ? <tr key={i} className={cssTables.rgh}><td colSpan={cols.length}>{r._h}</td></tr> : <tr key={i} className={r._t ? cssTables.rst : ''}>{cols.map((c) => <td key={c.k} className={c.n ? 'num' : ''}>{cellText(c, r[c.k])}</td>)}</tr>))}
+      {grand && rows.length > 0 && <tr className={cssTables.rgt}>{cols.map((c, i) => <td key={c.k} className={c.n ? 'num' : ''}>{i === 0 ? 'GRAND TOTAL' : cellText(c, grand[c.k])}</td>)}</tr>}</tbody></table>;
 }
 function PdfView({ title, sub, shop, onClose, children }) {
   useEffect(() => { const k = (e) => e.key === 'Escape' && onClose(); window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k); }, []);
@@ -1708,7 +1700,7 @@ function csvDownload(name, cols, rows, grand) {
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([[cols.map((c) => q(c.t)).join(','), ...body].join('\n')])); a.download = name + '.csv'; a.click();
 }
 function ActionBar({ onCsv, onPdf, onPrint, onClose, onRefresh, children }) {
-  return <div className="btns">{children}{onRefresh && <button onClick={onRefresh}><Ico n="refresh" s={15} /> Refresh <kbd>{KEYS.refresh}</kbd></button>}{onCsv && <button onClick={onCsv}><Ico n="down" s={15} /> CSV</button>}
+  return <div className={cssButtons.btns}>{children}{onRefresh && <button onClick={onRefresh}><Ico n="refresh" s={15} /> Refresh <kbd>{KEYS.refresh}</kbd></button>}{onCsv && <button onClick={onCsv}><Ico n="down" s={15} /> CSV</button>}
     <button onClick={onPdf}><Ico n="file" s={15} /> View in PDF Mode</button><button onClick={onPrint}><Ico n="print" s={15} /> Print</button><button onClick={onClose}>Close</button></div>;
 }
 const rangeChips = (setR, today = ld(new Date())) => ({ Today: [today, today], Yesterday: [addDays(today, -1), addDays(today, -1)], '7 days': [addDays(today, -6), today], '30 days': [addDays(today, -29), today], 'This month': [today.slice(0, 8) + '01', today] });
@@ -1719,7 +1711,7 @@ function mkCtx(D) {
   const shop = D.settings.find((x) => x.id === 'shop') || {}, sales = D.sales.filter((s) => !s.voided);
   const acc = {}; for (const p of D.purchases) for (const it of p.items) { const u = it.qty + (it.foc || 0); if (u) { const e = (acc[it.productId] ||= { v: 0, u: 0 }); e.v += it.value ?? it.qty * (it.price ?? it.cost ?? 0); e.u += u; } }
   const avgCost = {}; for (const k in acc) avgCost[k] = acc[k].v / acc[k].u;
-  const lastCost = {};[...D.purchases].sort((x, y) => ((x.date || '') + x.createdAt).localeCompare((y.date || '') + y.createdAt)).forEach((p) => p.items.forEach((it) => { const u = it.qty + (it.foc || 0); if (u) lastCost[it.productId] = (it.value ?? it.qty * (it.price ?? it.cost ?? 0)) / u; }));
+  const lastCost = {}; [...D.purchases].sort((x, y) => ((x.date || '') + x.createdAt).localeCompare((y.date || '') + y.createdAt)).forEach((p) => p.items.forEach((it) => { const u = it.qty + (it.foc || 0); if (u) lastCost[it.productId] = (it.value ?? it.qty * (it.price ?? it.cost ?? 0)) / u; }));
   const cost = (id) => +pm[id]?.costPrice || 0, f = (s) => (s.subtotal ? s.total / s.subtotal : 1), net = (x, s) => x.qty * x.rate * (1 - (x.disc || 0) / 100) * f(s), inR = (d, a, b) => d >= a && d <= b;
   const pday = (p) => p.date || ld(new Date(p.createdAt));
   const PR = (a, b) => D.preturns.filter((p) => inR(pday(p), a, b));
@@ -1742,19 +1734,15 @@ function mkCtx(D) {
     for (const r of D.preturns) { const d = pday(r); for (const it of r.items) { const q = -(it.qty + (it.foc || 0)); if (d > b) g(it.productId).pa += q; else if (d >= a) g(it.productId).purchased += q; } }
     for (const s of sales) { const d = sday(s); for (const it of s.items) if (it.taken !== false) { if (d > b) g(it.productId).sa += it.qty; else if (d >= a) g(it.productId).sold += it.qty; } }
     for (const r of D.returns) { const d = sday(r); for (const it of r.items || []) if (it.taken !== false) { if (d > b) g(it.productId).ra += it.qty; else if (d >= a) g(it.productId).returned += it.qty; } }
-    return D.products.filter((p) => p.active !== false).map((p) => {
-      const x = m[p.id] || { purchased: 0, sold: 0, returned: 0, pa: 0, sa: 0, ra: 0 }, closing = (+p.stock || 0) - (x.pa + x.ra - x.sa);
-      return { ...meta(p.id, p.name), id: p.id, cost: +p.costPrice || 0, sale: +p.salePrice || 0, purchased: x.purchased, sold: x.sold, returned: x.returned, closing, opening: closing - x.purchased - x.returned + x.sold };
-    });
+    return D.products.filter((p) => p.active !== false).map((p) => { const x = m[p.id] || { purchased: 0, sold: 0, returned: 0, pa: 0, sa: 0, ra: 0 }, closing = (+p.stock || 0) - (x.pa + x.ra - x.sa);
+      return { ...meta(p.id, p.name), id: p.id, cost: +p.costPrice || 0, sale: +p.salePrice || 0, purchased: x.purchased, sold: x.sold, returned: x.returned, closing, opening: closing - x.purchased - x.returned + x.sold }; });
   };
-  const prodX = (kind, a, b) => {
-    const m = {}, put = (id, name, qty, amt) => { const e = (m[id || name] ||= { id, name, qty: 0, net: 0 }); e.qty += qty; e.net += amt; };
+  const prodX = (kind, a, b) => { const m = {}, put = (id, name, qty, amt) => { const e = (m[id || name] ||= { id, name, qty: 0, net: 0 }); e.qty += qty; e.net += amt; };
     if (kind === 'sales') for (const s of S(a, b)) for (const x of s.items) put(x.productId, x.name, x.qty, net(x, s));
     if (kind === 'purchases') for (const p of P(a, b)) for (const x of p.items) put(x.productId, x.name, x.qty + (x.foc || 0), x.value ?? x.qty * (x.cost ?? 0));
     if (kind === 'returns') for (const r of R(a, b)) for (const x of r.items || []) put(x.productId, x.name, x.qty, x.qty * x.rate * (1 - (x.disc || 0) / 100));
     if (kind === 'pret') for (const r of PR(a, b)) for (const x of r.items) put(x.productId, x.name, x.qty + (x.foc || 0), x.value);
-    return Object.values(m).map((e) => ({ ...meta(e.id, e.name), id: e.id, qty: e.qty, net: e.net }));
-  };
+    return Object.values(m).map((e) => ({ ...meta(e.id, e.name), id: e.id, qty: e.qty, net: e.net })); };
   return { D, pm, shop, sales, PR, avgCost, lastCost, cost, net, gross, S, R, P, V, meta, cashRows, cashOpen, mov, prodX, pday };
 }
 const byKey = (arr, kf) => { const m = {}; for (const x of arr) (m[kf(x)] ||= []).push(x); return Object.entries(m).sort((a, b) => a[0].localeCompare(b[0])); };
@@ -1763,137 +1751,63 @@ const periodCols = (...x) => [{ k: 'date', t: 'DATE' }, ...x];
 
 // 28 reports. build(C, {from,to}) -> { cols, rows, grand?, note? }
 const REPORTS = [
-  {
-    id: 'd-sales', g: 'DAILY REPORTS', t: 'Daily Sales Report', mode: 'day', build: (C, p) => {
-      const rows = C.S(p.from, p.to).map((s) => { const g = C.gross(s); return { no: s.billNo, time: new Date(s.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }), cust: s.customer, type: s.type, items: s.items.length, gross: g, disc: g - s.total, net: s.total, by: s.cashier }; });
-      return { cols: [{ k: 'no', t: 'BILL #' }, { k: 'time', t: 'TIME' }, { k: 'cust', t: 'CUSTOMER' }, { k: 'type', t: 'TYPE' }, { k: 'items', t: 'ITEMS', n: 'i' }, { k: 'gross', t: 'GROSS', n: 'm' }, { k: 'disc', t: 'DISCOUNT', n: 'm' }, { k: 'net', t: 'NET', n: 'm' }, { k: 'by', t: 'USER' }], rows, grand: sumRows(rows, ['items', 'gross', 'disc', 'net']) };
-    }
-  },
-  {
-    id: 'd-purch', g: 'DAILY REPORTS', t: 'Daily Purchase Report', mode: 'day', build: (C, p) => {
-      const rows = C.P(p.from, p.to).map((x) => ({ no: x.purchaseNo, sup: x.supplier, type: x.type || 'CASH', bill: x.invoiceNo, items: x.items.length, total: x.total, by: x.user }));
-      return { cols: [{ k: 'no', t: 'VOUCHER' }, { k: 'sup', t: 'SUPPLIER' }, { k: 'type', t: 'TYPE' }, { k: 'bill', t: 'THEIR BILL' }, { k: 'items', t: 'ITEMS', n: 'i' }, { k: 'total', t: 'TOTAL', n: 'm' }, { k: 'by', t: 'USER' }], rows, grand: sumRows(rows, ['items', 'total']) };
-    }
-  },
-  {
-    id: 'd-sret', g: 'DAILY REPORTS', t: 'Daily Sales Return Report', mode: 'day', build: (C, p) => {
-      const rows = C.R(p.from, p.to).map((r) => ({ no: r.returnNo, cust: r.customer, bill: r.billNo || '', type: r.type, items: (r.items || []).length, total: r.total, by: r.cashier }));
-      return { cols: [{ k: 'no', t: 'RETURN #' }, { k: 'cust', t: 'CUSTOMER' }, { k: 'bill', t: 'AGAINST BILL' }, { k: 'type', t: 'TYPE' }, { k: 'items', t: 'ITEMS', n: 'i' }, { k: 'total', t: 'REFUND', n: 'm' }, { k: 'by', t: 'USER' }], rows, grand: sumRows(rows, ['items', 'total']) };
-    }
-  },
-  {
-    id: 'd-pret', g: 'DAILY REPORTS', t: 'Daily Purchase Return Report', mode: 'day', build: (C, p) => {
-      const rows = C.PR(p.from, p.to).map((x) => ({ no: x.returnNo, sup: x.supplier, type: x.type, bill: x.invoiceNo, items: x.items.length, total: x.total, by: x.user }));
-      return { cols: [{ k: 'no', t: 'RETURN #' }, { k: 'sup', t: 'SUPPLIER' }, { k: 'type', t: 'TYPE' }, { k: 'bill', t: 'THEIR BILL' }, { k: 'items', t: 'ITEMS', n: 'i' }, { k: 'total', t: 'REFUND', n: 'm' }, { k: 'by', t: 'USER' }], rows, grand: sumRows(rows, ['items', 'total']) };
-    }
-  },
+  { id: 'd-sales', g: 'DAILY REPORTS', t: 'Daily Sales Report', mode: 'day', build: (C, p) => { const rows = C.S(p.from, p.to).map((s) => { const g = C.gross(s); return { no: s.billNo, time: new Date(s.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }), cust: s.customer, type: s.type, items: s.items.length, gross: g, disc: g - s.total, net: s.total, by: s.cashier }; });
+    return { cols: [{ k: 'no', t: 'BILL #' }, { k: 'time', t: 'TIME' }, { k: 'cust', t: 'CUSTOMER' }, { k: 'type', t: 'TYPE' }, { k: 'items', t: 'ITEMS', n: 'i' }, { k: 'gross', t: 'GROSS', n: 'm' }, { k: 'disc', t: 'DISCOUNT', n: 'm' }, { k: 'net', t: 'NET', n: 'm' }, { k: 'by', t: 'USER' }], rows, grand: sumRows(rows, ['items', 'gross', 'disc', 'net']) }; } },
+  { id: 'd-purch', g: 'DAILY REPORTS', t: 'Daily Purchase Report', mode: 'day', build: (C, p) => { const rows = C.P(p.from, p.to).map((x) => ({ no: x.purchaseNo, sup: x.supplier, type: x.type || 'CASH', bill: x.invoiceNo, items: x.items.length, total: x.total, by: x.user }));
+    return { cols: [{ k: 'no', t: 'VOUCHER' }, { k: 'sup', t: 'SUPPLIER' }, { k: 'type', t: 'TYPE' }, { k: 'bill', t: 'THEIR BILL' }, { k: 'items', t: 'ITEMS', n: 'i' }, { k: 'total', t: 'TOTAL', n: 'm' }, { k: 'by', t: 'USER' }], rows, grand: sumRows(rows, ['items', 'total']) }; } },
+  { id: 'd-sret', g: 'DAILY REPORTS', t: 'Daily Sales Return Report', mode: 'day', build: (C, p) => { const rows = C.R(p.from, p.to).map((r) => ({ no: r.returnNo, cust: r.customer, bill: r.billNo || '', type: r.type, items: (r.items || []).length, total: r.total, by: r.cashier }));
+    return { cols: [{ k: 'no', t: 'RETURN #' }, { k: 'cust', t: 'CUSTOMER' }, { k: 'bill', t: 'AGAINST BILL' }, { k: 'type', t: 'TYPE' }, { k: 'items', t: 'ITEMS', n: 'i' }, { k: 'total', t: 'REFUND', n: 'm' }, { k: 'by', t: 'USER' }], rows, grand: sumRows(rows, ['items', 'total']) }; } },
+  { id: 'd-pret', g: 'DAILY REPORTS', t: 'Daily Purchase Return Report', mode: 'day', build: (C, p) => { const rows = C.PR(p.from, p.to).map((x) => ({ no: x.returnNo, sup: x.supplier, type: x.type, bill: x.invoiceNo, items: x.items.length, total: x.total, by: x.user }));
+    return { cols: [{ k: 'no', t: 'RETURN #' }, { k: 'sup', t: 'SUPPLIER' }, { k: 'type', t: 'TYPE' }, { k: 'bill', t: 'THEIR BILL' }, { k: 'items', t: 'ITEMS', n: 'i' }, { k: 'total', t: 'REFUND', n: 'm' }, { k: 'by', t: 'USER' }], rows, grand: sumRows(rows, ['items', 'total']) }; } },
   { id: 'd-dayend', g: 'DAILY REPORTS', t: 'Day End Report', mode: 'day', build: (C, p) => dayEnd(C, p.from, p.to, false) },
-  {
-    id: 'd-price', g: 'DAILY REPORTS', t: 'Price Comparison Analysis', mode: 'asof', build: (C) => {
-      const rows = C.D.products.filter((p) => p.active !== false).map((p) => { const c = +p.costPrice || 0, s = +p.salePrice || 0; return { code: p.barcode || p.code || '', name: p.name, cost: c, avg: C.avgCost[p.id] ?? '', last: C.lastCost[p.id] ?? '', sale: s, margin: s ? ((s - c) / s) * 100 : 0 }; }).sort((a, b) => a.margin - b.margin);
-      return { cols: [{ k: 'code', t: 'CODE' }, { k: 'name', t: 'ITEM' }, { k: 'cost', t: 'COST', n: 'm' }, { k: 'avg', t: 'AVG BOUGHT', n: 'm' }, { k: 'last', t: 'LAST BOUGHT', n: 'm' }, { k: 'sale', t: 'SALE PRICE', n: 'm' }, { k: 'margin', t: 'MARGIN', n: 'p' }], rows, note: 'Lowest margins first.' };
-    }
-  },
-  {
-    id: 'd-activity', g: 'DAILY REPORTS', t: 'Daily Business Activity Analysis', mode: 'day', build: (C, p) => {
-      const rows = Array.from({ length: 24 }, (_, h) => {
-        const ss = C.S(p.from, p.to).filter((s) => new Date(s.createdAt).getHours() === h), rr = C.R(p.from, p.to).filter((r) => new Date(r.createdAt).getHours() === h);
-        return { hour: `${String(h).padStart(2, '0')}:00`, bills: ss.length, sales: ss.reduce((t, s) => t + s.total, 0), rets: rr.reduce((t, r) => t + r.total, 0), net: ss.reduce((t, s) => t + s.total, 0) - rr.reduce((t, r) => t + r.total, 0) };
-      }).filter((r) => r.bills || r.rets);
-      return { cols: [{ k: 'hour', t: 'HOUR' }, { k: 'bills', t: 'BILLS', n: 'i' }, { k: 'sales', t: 'SALES', n: 'm' }, { k: 'rets', t: 'RETURNS', n: 'm' }, { k: 'net', t: 'NET', n: 'm' }], rows, grand: sumRows(rows, ['bills', 'sales', 'rets', 'net']) };
-    }
-  },
+  { id: 'd-price', g: 'DAILY REPORTS', t: 'Price Comparison Analysis', mode: 'asof', build: (C) => { const rows = C.D.products.filter((p) => p.active !== false).map((p) => { const c = +p.costPrice || 0, s = +p.salePrice || 0; return { code: p.barcode || p.code || '', name: p.name, cost: c, avg: C.avgCost[p.id] ?? '', last: C.lastCost[p.id] ?? '', sale: s, margin: s ? ((s - c) / s) * 100 : 0 }; }).sort((a, b) => a.margin - b.margin);
+    return { cols: [{ k: 'code', t: 'CODE' }, { k: 'name', t: 'ITEM' }, { k: 'cost', t: 'COST', n: 'm' }, { k: 'avg', t: 'AVG BOUGHT', n: 'm' }, { k: 'last', t: 'LAST BOUGHT', n: 'm' }, { k: 'sale', t: 'SALE PRICE', n: 'm' }, { k: 'margin', t: 'MARGIN', n: 'p' }], rows, note: 'Lowest margins first.' }; } },
+  { id: 'd-activity', g: 'DAILY REPORTS', t: 'Daily Business Activity Analysis', mode: 'day', build: (C, p) => { const rows = Array.from({ length: 24 }, (_, h) => { const ss = C.S(p.from, p.to).filter((s) => new Date(s.createdAt).getHours() === h), rr = C.R(p.from, p.to).filter((r) => new Date(r.createdAt).getHours() === h);
+      return { hour: `${String(h).padStart(2, '0')}:00`, bills: ss.length, sales: ss.reduce((t, s) => t + s.total, 0), rets: rr.reduce((t, r) => t + r.total, 0), net: ss.reduce((t, s) => t + s.total, 0) - rr.reduce((t, r) => t + r.total, 0) }; }).filter((r) => r.bills || r.rets);
+    return { cols: [{ k: 'hour', t: 'HOUR' }, { k: 'bills', t: 'BILLS', n: 'i' }, { k: 'sales', t: 'SALES', n: 'm' }, { k: 'rets', t: 'RETURNS', n: 'm' }, { k: 'net', t: 'NET', n: 'm' }], rows, grand: sumRows(rows, ['bills', 'sales', 'rets', 'net']) }; } },
   { id: 's-cat', g: 'SALES REPORTS', t: 'Product Sales Summary Category Wise', mode: 'range', build: (C, p) => salesSummary(C, p, 'category') },
   { id: 's-prod', g: 'SALES REPORTS', t: 'Product Sales Summary Product Wise', mode: 'range', build: (C, p) => salesSummary(C, p, 'name') },
   { id: 's-mfr', g: 'SALES REPORTS', t: 'Product Sales Summary Manufacturer Based', mode: 'range', build: (C, p) => salesSummary(C, p, 'company') },
-  {
-    id: 'pu-mfr', g: 'PURCHASE REPORTS', t: 'Manufacturer Based Purchase Summary', mode: 'range', build: (C, p) => {
-      const rows = byKey(C.prodX('purchases', p.from, p.to), (x) => x.company).map(([k, a]) => ({ company: k, items: a.length, qty: a.reduce((t, x) => t + x.qty, 0), net: a.reduce((t, x) => t + x.net, 0) }));
-      return { cols: [{ k: 'company', t: 'MANUFACTURER' }, { k: 'items', t: 'ITEMS', n: 'i' }, { k: 'qty', t: 'QTY (WITH FOC)', n: 'q' }, { k: 'net', t: 'PURCHASED VALUE', n: 'm' }], rows, grand: sumRows(rows, ['items', 'qty', 'net']) };
-    }
-  },
+  { id: 'pu-mfr', g: 'PURCHASE REPORTS', t: 'Manufacturer Based Purchase Summary', mode: 'range', build: (C, p) => { const rows = byKey(C.prodX('purchases', p.from, p.to), (x) => x.company).map(([k, a]) => ({ company: k, items: a.length, qty: a.reduce((t, x) => t + x.qty, 0), net: a.reduce((t, x) => t + x.net, 0) }));
+    return { cols: [{ k: 'company', t: 'MANUFACTURER' }, { k: 'items', t: 'ITEMS', n: 'i' }, { k: 'qty', t: 'QTY (WITH FOC)', n: 'q' }, { k: 'net', t: 'PURCHASED VALUE', n: 'm' }], rows, grand: sumRows(rows, ['items', 'qty', 'net']) }; } },
   { id: 'st-mfr', g: 'STOCK REPORTS', t: 'Stock Valuation Summary Manufacturer Wise', mode: 'asof', build: (C, p) => stockVal(C, p, 'mfr', false) },
   { id: 'st-all', g: 'STOCK REPORTS', t: 'Stock Valuation Summary Manufacturer, Category & Product Wise', mode: 'asof', build: (C, p) => stockVal(C, p, 'all', false) },
   { id: 'st-all-p', g: 'STOCK REPORTS', t: 'Stock Valuation Summary Manufacturer, Category & Product Wise (Periodic)', mode: 'range', build: (C, p) => stockVal(C, p, 'all', true) },
   { id: 'st-mfr-p', g: 'STOCK REPORTS', t: 'Stock Valuation Summary Manufacturer Wise (Periodic)', mode: 'range', build: (C, p) => stockVal(C, p, 'mfr', true) },
-  {
-    id: 'p-sales', g: 'PERIODIC REPORTS', t: 'Sales Summary Report', mode: 'range', build: (C, p) => {
-      const rows = daysIn(p.from, p.to).map((d) => {
-        const ss = C.S(d, d), g = ss.reduce((t, s) => t + C.gross(s), 0), tot = ss.reduce((t, s) => t + s.total, 0), ret = C.R(d, d).reduce((t, r) => t + r.total, 0);
-        return { date: d, bills: ss.length, gross: g, disc: g - tot, ret, net: tot - ret, cash: ss.filter((s) => s.type !== 'CREDIT').reduce((t, s) => t + s.total, 0), credit: ss.filter((s) => s.type === 'CREDIT').reduce((t, s) => t + s.total, 0) };
-      }).filter((r) => r.bills || r.ret);
-      return { cols: periodCols({ k: 'bills', t: 'BILLS', n: 'i' }, { k: 'gross', t: 'GROSS', n: 'm' }, { k: 'disc', t: 'DISCOUNTS', n: 'm' }, { k: 'ret', t: 'RETURNS', n: 'm' }, { k: 'net', t: 'NET SALES', n: 'm' }, { k: 'cash', t: 'CASH', n: 'm' }, { k: 'credit', t: 'CREDIT', n: 'm' }), rows, grand: sumRows(rows, ['bills', 'gross', 'disc', 'ret', 'net', 'cash', 'credit']) };
-    }
-  },
-  {
-    id: 'p-purch', g: 'PERIODIC REPORTS', t: 'Purchase Summary Report', mode: 'range', build: (C, p) => {
-      const rows = daysIn(p.from, p.to).map((d) => { const x = C.P(d, d); return { date: d, n: x.length, sub: x.reduce((t, y) => t + y.subtotal, 0), disc: x.reduce((t, y) => t + (y.discount1 || 0) + (y.discount2 || 0), 0), gst: x.reduce((t, y) => t + (y.gst || 0), 0), exp: x.reduce((t, y) => t + (y.expenses || 0), 0), total: x.reduce((t, y) => t + y.total, 0) }; }).filter((r) => r.n);
-      return { cols: periodCols({ k: 'n', t: 'PURCHASES', n: 'i' }, { k: 'sub', t: 'GROSS', n: 'm' }, { k: 'disc', t: 'DISCOUNTS', n: 'm' }, { k: 'gst', t: 'GST', n: 'm' }, { k: 'exp', t: 'EXPENSES', n: 'm' }, { k: 'total', t: 'TOTAL', n: 'm' }), rows, grand: sumRows(rows, ['n', 'sub', 'disc', 'gst', 'exp', 'total']) };
-    }
-  },
-  {
-    id: 'p-sret', g: 'PERIODIC REPORTS', t: 'Sales Return Summary Report', mode: 'range', build: (C, p) => {
-      const rows = daysIn(p.from, p.to).map((d) => { const x = C.R(d, d); return { date: d, n: x.length, cash: x.filter((r) => r.type === 'CASH').reduce((t, r) => t + r.total, 0), credit: x.filter((r) => r.type === 'CREDIT').reduce((t, r) => t + r.total, 0), total: x.reduce((t, r) => t + r.total, 0) }; }).filter((r) => r.n);
-      return { cols: periodCols({ k: 'n', t: 'RETURNS', n: 'i' }, { k: 'cash', t: 'CASH REFUNDS', n: 'm' }, { k: 'credit', t: 'CREDITED TO ACCOUNTS', n: 'm' }, { k: 'total', t: 'TOTAL', n: 'm' }), rows, grand: sumRows(rows, ['n', 'cash', 'credit', 'total']) };
-    }
-  },
-  {
-    id: 'p-pret', g: 'PERIODIC REPORTS', t: 'Purchase Return Summary Report', mode: 'range', build: (C, p) => {
-      const rows = daysIn(p.from, p.to).map((d) => { const x = C.PR(d, d); return { date: d, n: x.length, cash: x.filter((r) => r.type === 'CASH').reduce((t, r) => t + r.total, 0), credit: x.filter((r) => r.type === 'CREDIT').reduce((t, r) => t + r.total, 0), total: x.reduce((t, r) => t + r.total, 0) }; }).filter((r) => r.n);
-      return { cols: periodCols({ k: 'n', t: 'RETURNS', n: 'i' }, { k: 'cash', t: 'CASH REFUNDS', n: 'm' }, { k: 'credit', t: 'CREDIT NOTES', n: 'm' }, { k: 'total', t: 'TOTAL', n: 'm' }), rows, grand: sumRows(rows, ['n', 'cash', 'credit', 'total']) };
-    }
-  },
+  { id: 'p-sales', g: 'PERIODIC REPORTS', t: 'Sales Summary Report', mode: 'range', build: (C, p) => { const rows = daysIn(p.from, p.to).map((d) => { const ss = C.S(d, d), g = ss.reduce((t, s) => t + C.gross(s), 0), tot = ss.reduce((t, s) => t + s.total, 0), ret = C.R(d, d).reduce((t, r) => t + r.total, 0);
+      return { date: d, bills: ss.length, gross: g, disc: g - tot, ret, net: tot - ret, cash: ss.filter((s) => s.type !== 'CREDIT').reduce((t, s) => t + s.total, 0), credit: ss.filter((s) => s.type === 'CREDIT').reduce((t, s) => t + s.total, 0) }; }).filter((r) => r.bills || r.ret);
+    return { cols: periodCols({ k: 'bills', t: 'BILLS', n: 'i' }, { k: 'gross', t: 'GROSS', n: 'm' }, { k: 'disc', t: 'DISCOUNTS', n: 'm' }, { k: 'ret', t: 'RETURNS', n: 'm' }, { k: 'net', t: 'NET SALES', n: 'm' }, { k: 'cash', t: 'CASH', n: 'm' }, { k: 'credit', t: 'CREDIT', n: 'm' }), rows, grand: sumRows(rows, ['bills', 'gross', 'disc', 'ret', 'net', 'cash', 'credit']) }; } },
+  { id: 'p-purch', g: 'PERIODIC REPORTS', t: 'Purchase Summary Report', mode: 'range', build: (C, p) => { const rows = daysIn(p.from, p.to).map((d) => { const x = C.P(d, d); return { date: d, n: x.length, sub: x.reduce((t, y) => t + y.subtotal, 0), disc: x.reduce((t, y) => t + (y.discount1 || 0) + (y.discount2 || 0), 0), gst: x.reduce((t, y) => t + (y.gst || 0), 0), exp: x.reduce((t, y) => t + (y.expenses || 0), 0), total: x.reduce((t, y) => t + y.total, 0) }; }).filter((r) => r.n);
+    return { cols: periodCols({ k: 'n', t: 'PURCHASES', n: 'i' }, { k: 'sub', t: 'GROSS', n: 'm' }, { k: 'disc', t: 'DISCOUNTS', n: 'm' }, { k: 'gst', t: 'GST', n: 'm' }, { k: 'exp', t: 'EXPENSES', n: 'm' }, { k: 'total', t: 'TOTAL', n: 'm' }), rows, grand: sumRows(rows, ['n', 'sub', 'disc', 'gst', 'exp', 'total']) }; } },
+  { id: 'p-sret', g: 'PERIODIC REPORTS', t: 'Sales Return Summary Report', mode: 'range', build: (C, p) => { const rows = daysIn(p.from, p.to).map((d) => { const x = C.R(d, d); return { date: d, n: x.length, cash: x.filter((r) => r.type === 'CASH').reduce((t, r) => t + r.total, 0), credit: x.filter((r) => r.type === 'CREDIT').reduce((t, r) => t + r.total, 0), total: x.reduce((t, r) => t + r.total, 0) }; }).filter((r) => r.n);
+    return { cols: periodCols({ k: 'n', t: 'RETURNS', n: 'i' }, { k: 'cash', t: 'CASH REFUNDS', n: 'm' }, { k: 'credit', t: 'CREDITED TO ACCOUNTS', n: 'm' }, { k: 'total', t: 'TOTAL', n: 'm' }), rows, grand: sumRows(rows, ['n', 'cash', 'credit', 'total']) }; } },
+  { id: 'p-pret', g: 'PERIODIC REPORTS', t: 'Purchase Return Summary Report', mode: 'range', build: (C, p) => { const rows = daysIn(p.from, p.to).map((d) => { const x = C.PR(d, d); return { date: d, n: x.length, cash: x.filter((r) => r.type === 'CASH').reduce((t, r) => t + r.total, 0), credit: x.filter((r) => r.type === 'CREDIT').reduce((t, r) => t + r.total, 0), total: x.reduce((t, r) => t + r.total, 0) }; }).filter((r) => r.n);
+    return { cols: periodCols({ k: 'n', t: 'RETURNS', n: 'i' }, { k: 'cash', t: 'CASH REFUNDS', n: 'm' }, { k: 'credit', t: 'CREDIT NOTES', n: 'm' }, { k: 'total', t: 'TOTAL', n: 'm' }), rows, grand: sumRows(rows, ['n', 'cash', 'credit', 'total']) }; } },
   { id: 'p-dayend', g: 'PERIODIC REPORTS', t: 'Day End Report Periodic', mode: 'range', build: (C, p) => dayEnd(C, p.from, p.to, true) },
-  {
-    id: 'p-activity', g: 'PERIODIC REPORTS', t: 'Business Activity Report Periodic', mode: 'range', build: (C, p) => {
-      const rows = daysIn(p.from, p.to).map((d) => ({ date: d, bills: C.S(d, d).length, sales: C.S(d, d).reduce((t, s) => t + s.total, 0), rets: C.R(d, d).reduce((t, r) => t + r.total, 0), purch: C.P(d, d).reduce((t, x) => t + x.total, 0), pay: C.V(d, d).filter((v) => v.kind === 'PAYMENT').reduce((t, v) => t + v.total, 0), rec: C.V(d, d).filter((v) => v.kind === 'RECEIPT').reduce((t, v) => t + v.total, 0) })).filter((r) => r.bills || r.rets || r.purch || r.pay || r.rec);
-      return { cols: periodCols({ k: 'bills', t: 'BILLS', n: 'i' }, { k: 'sales', t: 'SALES', n: 'm' }, { k: 'rets', t: 'RETURNS', n: 'm' }, { k: 'purch', t: 'PURCHASES', n: 'm' }, { k: 'pay', t: 'PAYMENTS', n: 'm' }, { k: 'rec', t: 'RECEIPTS', n: 'm' }), rows, grand: sumRows(rows, ['bills', 'sales', 'rets', 'purch', 'pay', 'rec']) };
-    }
-  },
-  {
-    id: 'f-inv', g: 'FINANCIAL REPORTS', t: 'Invoice Based Profit/Loss', mode: 'range', build: (C, p) => {
-      const rows = C.S(p.from, p.to).map((s) => { const c = s.items.reduce((t, x) => t + C.cost(x.productId) * x.qty, 0); return { no: s.billNo, date: sday(s), cust: s.customer, sales: s.total, cost: c, profit: s.total - c, pct: s.total ? ((s.total - c) / s.total) * 100 : 0 }; });
-      return { cols: [{ k: 'no', t: 'BILL #' }, { k: 'date', t: 'DATE' }, { k: 'cust', t: 'CUSTOMER' }, { k: 'sales', t: 'SALES', n: 'm' }, { k: 'cost', t: 'COST', n: 'm' }, { k: 'profit', t: 'PROFIT', n: 'm' }, { k: 'pct', t: 'MARGIN', n: 'p' }], rows, grand: { ...sumRows(rows, ['sales', 'cost', 'profit']), pct: 0 }, note: 'Cost uses each product’s current cost price.' };
-    }
-  },
-  {
-    id: 'f-invd', g: 'FINANCIAL REPORTS', t: 'Invoice Based Profit/Loss Detailed Report', mode: 'range', build: (C, p) => {
-      const rows = []; for (const s of C.S(p.from, p.to)) { rows.push({ _h: `${s.billNo} · ${dd(sday(s))} · ${s.customer}` }); for (const x of s.items) { const c = C.cost(x.productId) * x.qty, v = C.net(x, s); rows.push({ item: x.name, qty: x.qty, rate: x.rate, sales: v, cost: c, profit: v - c }); } }
-      return { cols: [{ k: 'item', t: 'ITEM' }, { k: 'qty', t: 'QTY', n: 'q' }, { k: 'rate', t: 'RATE', n: 'm' }, { k: 'sales', t: 'SALES', n: 'm' }, { k: 'cost', t: 'COST', n: 'm' }, { k: 'profit', t: 'PROFIT', n: 'm' }], rows, grand: sumRows(rows, ['sales', 'cost', 'profit']), note: 'Cost uses each product’s current cost price.' };
-    }
-  },
+  { id: 'p-activity', g: 'PERIODIC REPORTS', t: 'Business Activity Report Periodic', mode: 'range', build: (C, p) => { const rows = daysIn(p.from, p.to).map((d) => ({ date: d, bills: C.S(d, d).length, sales: C.S(d, d).reduce((t, s) => t + s.total, 0), rets: C.R(d, d).reduce((t, r) => t + r.total, 0), purch: C.P(d, d).reduce((t, x) => t + x.total, 0), pay: C.V(d, d).filter((v) => v.kind === 'PAYMENT').reduce((t, v) => t + v.total, 0), rec: C.V(d, d).filter((v) => v.kind === 'RECEIPT').reduce((t, v) => t + v.total, 0) })).filter((r) => r.bills || r.rets || r.purch || r.pay || r.rec);
+    return { cols: periodCols({ k: 'bills', t: 'BILLS', n: 'i' }, { k: 'sales', t: 'SALES', n: 'm' }, { k: 'rets', t: 'RETURNS', n: 'm' }, { k: 'purch', t: 'PURCHASES', n: 'm' }, { k: 'pay', t: 'PAYMENTS', n: 'm' }, { k: 'rec', t: 'RECEIPTS', n: 'm' }), rows, grand: sumRows(rows, ['bills', 'sales', 'rets', 'purch', 'pay', 'rec']) }; } },
+  { id: 'f-inv', g: 'FINANCIAL REPORTS', t: 'Invoice Based Profit/Loss', mode: 'range', build: (C, p) => { const rows = C.S(p.from, p.to).map((s) => { const c = s.items.reduce((t, x) => t + C.cost(x.productId) * x.qty, 0); return { no: s.billNo, date: sday(s), cust: s.customer, sales: s.total, cost: c, profit: s.total - c, pct: s.total ? ((s.total - c) / s.total) * 100 : 0 }; });
+    return { cols: [{ k: 'no', t: 'BILL #' }, { k: 'date', t: 'DATE' }, { k: 'cust', t: 'CUSTOMER' }, { k: 'sales', t: 'SALES', n: 'm' }, { k: 'cost', t: 'COST', n: 'm' }, { k: 'profit', t: 'PROFIT', n: 'm' }, { k: 'pct', t: 'MARGIN', n: 'p' }], rows, grand: { ...sumRows(rows, ['sales', 'cost', 'profit']), pct: 0 }, note: 'Cost uses each product’s current cost price.' }; } },
+  { id: 'f-invd', g: 'FINANCIAL REPORTS', t: 'Invoice Based Profit/Loss Detailed Report', mode: 'range', build: (C, p) => { const rows = []; for (const s of C.S(p.from, p.to)) { rows.push({ _h: `${s.billNo} · ${dd(sday(s))} · ${s.customer}` }); for (const x of s.items) { const c = C.cost(x.productId) * x.qty, v = C.net(x, s); rows.push({ item: x.name, qty: x.qty, rate: x.rate, sales: v, cost: c, profit: v - c }); } }
+    return { cols: [{ k: 'item', t: 'ITEM' }, { k: 'qty', t: 'QTY', n: 'q' }, { k: 'rate', t: 'RATE', n: 'm' }, { k: 'sales', t: 'SALES', n: 'm' }, { k: 'cost', t: 'COST', n: 'm' }, { k: 'profit', t: 'PROFIT', n: 'm' }], rows, grand: sumRows(rows, ['sales', 'cost', 'profit']), note: 'Cost uses each product’s current cost price.' }; } },
   { id: 'f-item', g: 'FINANCIAL REPORTS', t: 'Itemized Profit/Loss Report', mode: 'range', build: (C, p) => profitByItem(C, p, false) },
-  {
-    id: 'f-stock', g: 'FINANCIAL REPORTS', t: 'Profit by Stock', mode: 'asof', build: (C) => {
-      const rows = C.D.products.filter((x) => x.active !== false && (+x.stock || 0) > 0).map((x) => { const q = +x.stock || 0, c = +x.costPrice || 0, s = +x.salePrice || 0; return { code: x.barcode || x.code || '', name: x.name, qty: q, cost: q * c, value: q * s, profit: q * (s - c) }; }).sort((a, b) => b.profit - a.profit);
-      return { cols: [{ k: 'code', t: 'CODE' }, { k: 'name', t: 'ITEM' }, { k: 'qty', t: 'IN STOCK', n: 'q' }, { k: 'cost', t: 'AT COST', n: 'm' }, { k: 'value', t: 'AT SALE PRICE', n: 'm' }, { k: 'profit', t: 'PROFIT IF ALL SOLD', n: 'm' }], rows, grand: sumRows(rows, ['cost', 'value', 'profit']) };
-    }
-  },
+  { id: 'f-stock', g: 'FINANCIAL REPORTS', t: 'Profit by Stock', mode: 'asof', build: (C) => { const rows = C.D.products.filter((x) => x.active !== false && (+x.stock || 0) > 0).map((x) => { const q = +x.stock || 0, c = +x.costPrice || 0, s = +x.salePrice || 0; return { code: x.barcode || x.code || '', name: x.name, qty: q, cost: q * c, value: q * s, profit: q * (s - c) }; }).sort((a, b) => b.profit - a.profit);
+    return { cols: [{ k: 'code', t: 'CODE' }, { k: 'name', t: 'ITEM' }, { k: 'qty', t: 'IN STOCK', n: 'q' }, { k: 'cost', t: 'AT COST', n: 'm' }, { k: 'value', t: 'AT SALE PRICE', n: 'm' }, { k: 'profit', t: 'PROFIT IF ALL SOLD', n: 'm' }], rows, grand: sumRows(rows, ['cost', 'value', 'profit']) }; } },
   { id: 'f-avg', g: 'FINANCIAL REPORTS', t: 'Profit/Loss AVG Method', mode: 'range', build: (C, p) => profitByItem(C, p, true) },
-  {
-    id: 'f-tb', g: 'FINANCIAL REPORTS', t: 'Trial Balance', mode: 'asof', build: (C, p) => {
-      const cash = C.cashOpen('9999-12-31') + 0, stock = C.D.products.reduce((t, x) => t + (+x.stock || 0) * (+x.costPrice || 0), 0);
-      const rows = [{ acct: 'CASH ACCOUNT', cat: 'Cash', dr: cash > 0 ? cash : 0, cr: cash < 0 ? -cash : 0 }, { acct: 'STOCK IN TRADE (AT COST)', cat: 'Inventory', dr: stock > 0 ? stock : 0, cr: 0 }, ...C.D.accounts.filter((a) => a.balance).map((a) => ({ acct: a.title, cat: a.category, dr: a.balance > 0 ? a.balance : 0, cr: a.balance < 0 ? -a.balance : 0 }))], g = sumRows(rows, ['dr', 'cr']);
-      return { cols: [{ k: 'acct', t: 'ACCOUNT' }, { k: 'cat', t: 'CATEGORY' }, { k: 'dr', t: 'DEBIT', n: 'm' }, { k: 'cr', t: 'CREDIT', n: 'm' }], rows, grand: g, note: `Built from the balances Falcon keeps: cash, stock, customers, suppliers and vouchers. Falcon is not a full double-entry ledger, so the two sides can differ. Difference: Rs ${n2(Math.abs(g.dr - g.cr))} ${g.dr >= g.cr ? 'more debit' : 'more credit'}.` };
-    }
-  },
-  {
-    id: 'f-tbp', g: 'FINANCIAL REPORTS', t: 'Trial Balance Periodic', mode: 'range', build: (C, p) => {
-      const m = {}, add = (t, c, dr, cr) => { const e = (m[t] ||= { acct: t, cat: c, dr: 0, cr: 0 }); e.dr += dr; e.cr += cr; };
-      for (const s of C.S(p.from, p.to)) if (s.balance > 0) add(String(s.customer).toUpperCase(), 'Customers', s.balance, 0);
-      for (const r of C.R(p.from, p.to)) if (r.type === 'CREDIT') add(String(r.customer).toUpperCase(), 'Customers', 0, r.total);
-      for (const x of C.P(p.from, p.to)) if ((x.balance || 0) > 0) add(String(x.supplier).toUpperCase(), 'Suppliers', 0, x.balance);
-      for (const v of C.V(p.from, p.to)) for (const l of v.lines) add(l.title, C.D.accounts.find((a) => a.title === l.title)?.category || '', v.kind === 'PAYMENT' ? l.amount : 0, v.kind === 'RECEIPT' ? l.amount : 0);
-      const rows = Object.values(m).sort((a, b) => a.acct.localeCompare(b.acct));
-      return { cols: [{ k: 'acct', t: 'ACCOUNT' }, { k: 'cat', t: 'CATEGORY' }, { k: 'dr', t: 'DEBIT', n: 'm' }, { k: 'cr', t: 'CREDIT', n: 'm' }], rows, grand: sumRows(rows, ['dr', 'cr']), note: 'Movement on customer, supplier and voucher accounts during the period.' };
-    }
-  },
+  { id: 'f-tb', g: 'FINANCIAL REPORTS', t: 'Trial Balance', mode: 'asof', build: (C, p) => { const cash = C.cashOpen('9999-12-31') + 0, stock = C.D.products.reduce((t, x) => t + (+x.stock || 0) * (+x.costPrice || 0), 0);
+    const rows = [{ acct: 'CASH ACCOUNT', cat: 'Cash', dr: cash > 0 ? cash : 0, cr: cash < 0 ? -cash : 0 }, { acct: 'STOCK IN TRADE (AT COST)', cat: 'Inventory', dr: stock > 0 ? stock : 0, cr: 0 }, ...C.D.accounts.filter((a) => a.balance).map((a) => ({ acct: a.title, cat: a.category, dr: a.balance > 0 ? a.balance : 0, cr: a.balance < 0 ? -a.balance : 0 }))], g = sumRows(rows, ['dr', 'cr']);
+    return { cols: [{ k: 'acct', t: 'ACCOUNT' }, { k: 'cat', t: 'CATEGORY' }, { k: 'dr', t: 'DEBIT', n: 'm' }, { k: 'cr', t: 'CREDIT', n: 'm' }], rows, grand: g, note: `Built from the balances Falcon keeps: cash, stock, customers, suppliers and vouchers. Falcon is not a full double-entry ledger, so the two sides can differ. Difference: Rs ${n2(Math.abs(g.dr - g.cr))} ${g.dr >= g.cr ? 'more debit' : 'more credit'}.` }; } },
+  { id: 'f-tbp', g: 'FINANCIAL REPORTS', t: 'Trial Balance Periodic', mode: 'range', build: (C, p) => { const m = {}, add = (t, c, dr, cr) => { const e = (m[t] ||= { acct: t, cat: c, dr: 0, cr: 0 }); e.dr += dr; e.cr += cr; };
+    for (const s of C.S(p.from, p.to)) if (s.balance > 0) add(String(s.customer).toUpperCase(), 'Customers', s.balance, 0);
+    for (const r of C.R(p.from, p.to)) if (r.type === 'CREDIT') add(String(r.customer).toUpperCase(), 'Customers', 0, r.total);
+    for (const x of C.P(p.from, p.to)) if ((x.balance || 0) > 0) add(String(x.supplier).toUpperCase(), 'Suppliers', 0, x.balance);
+    for (const v of C.V(p.from, p.to)) for (const l of v.lines) add(l.title, C.D.accounts.find((a) => a.title === l.title)?.category || '', v.kind === 'PAYMENT' ? l.amount : 0, v.kind === 'RECEIPT' ? l.amount : 0);
+    const rows = Object.values(m).sort((a, b) => a.acct.localeCompare(b.acct));
+    return { cols: [{ k: 'acct', t: 'ACCOUNT' }, { k: 'cat', t: 'CATEGORY' }, { k: 'dr', t: 'DEBIT', n: 'm' }, { k: 'cr', t: 'CREDIT', n: 'm' }], rows, grand: sumRows(rows, ['dr', 'cr']), note: 'Movement on customer, supplier and voucher accounts during the period.' }; } },
 ];
 function dayEnd(C, a, b, periodic) {
-  const rows = daysIn(a, b).map((d) => {
-    const cr = C.cashRows().filter((r) => r.date === d), rec = cr.reduce((t, r) => t + r.receipt, 0), pay = cr.reduce((t, r) => t + r.payment, 0), op = C.cashOpen(d);
-    return { date: d, open: op, rec, pay, close: op + rec - pay, bills: C.S(d, d).length, sales: C.S(d, d).reduce((t, s) => t + s.total, 0) };
-  }).filter((r) => periodic ? r.rec || r.pay || r.bills : true);
+  const rows = daysIn(a, b).map((d) => { const cr = C.cashRows().filter((r) => r.date === d), rec = cr.reduce((t, r) => t + r.receipt, 0), pay = cr.reduce((t, r) => t + r.payment, 0), op = C.cashOpen(d);
+    return { date: d, open: op, rec, pay, close: op + rec - pay, bills: C.S(d, d).length, sales: C.S(d, d).reduce((t, s) => t + s.total, 0) }; }).filter((r) => periodic ? r.rec || r.pay || r.bills : true);
   return { cols: periodCols({ k: 'open', t: 'OPENING CASH', n: 'm' }, { k: 'bills', t: 'BILLS', n: 'i' }, { k: 'sales', t: 'SALES', n: 'm' }, { k: 'rec', t: 'CASH IN', n: 'm' }, { k: 'pay', t: 'CASH OUT', n: 'm' }, { k: 'close', t: 'CASH IN HAND', n: 'm' }), rows, grand: periodic ? { ...sumRows(rows, ['bills', 'sales', 'rec', 'pay']) } : null, note: 'Cash in = cash sales, receipts. Cash out = cash refunds, cash purchases, payments.' };
 }
 function salesSummary(C, p, by) {
@@ -1907,10 +1821,8 @@ function stockVal(C, p, how, periodic) {
   const a = periodic ? p.from : '0000-01-01', all = C.mov(a, p.to).filter((x) => x.closing || x.purchased || x.sold || x.returned);
   const v = (x) => x.closing * x.cost, sv = (x) => x.closing * x.sale, base = [{ k: 'qty', t: periodic ? 'CLOSING QTY' : 'QTY', n: 'q' }, { k: 'val', t: 'COST VALUE', n: 'm' }, { k: 'sval', t: 'SALE VALUE', n: 'm' }];
   const per = periodic ? [{ k: 'open', t: 'OPENING', n: 'q' }, { k: 'in', t: 'IN', n: 'q' }, { k: 'out', t: 'OUT', n: 'q' }] : [], mk = (x) => ({ open: x.opening, in: x.purchased + x.returned, out: x.sold, qty: x.closing, val: v(x), sval: sv(x) }), ks = [...(periodic ? ['open', 'in', 'out'] : []), 'qty', 'val', 'sval'];
-  if (how === 'mfr') {
-    const rows = byKey(all, (x) => x.company).map(([k, arr]) => ({ name: k, items: arr.length, open: arr.reduce((t, x) => t + x.opening, 0), in: arr.reduce((t, x) => t + x.purchased + x.returned, 0), out: arr.reduce((t, x) => t + x.sold, 0), qty: arr.reduce((t, x) => t + x.closing, 0), val: arr.reduce((t, x) => t + v(x), 0), sval: arr.reduce((t, x) => t + sv(x), 0) }));
-    return { cols: [{ k: 'name', t: 'MANUFACTURER' }, { k: 'items', t: 'ITEMS', n: 'i' }, ...per, ...base], rows, grand: sumRows(rows, ['items', ...ks]) };
-  }
+  if (how === 'mfr') { const rows = byKey(all, (x) => x.company).map(([k, arr]) => ({ name: k, items: arr.length, open: arr.reduce((t, x) => t + x.opening, 0), in: arr.reduce((t, x) => t + x.purchased + x.returned, 0), out: arr.reduce((t, x) => t + x.sold, 0), qty: arr.reduce((t, x) => t + x.closing, 0), val: arr.reduce((t, x) => t + v(x), 0), sval: arr.reduce((t, x) => t + sv(x), 0) }));
+    return { cols: [{ k: 'name', t: 'MANUFACTURER' }, { k: 'items', t: 'ITEMS', n: 'i' }, ...per, ...base], rows, grand: sumRows(rows, ['items', ...ks]) }; }
   const rows = []; for (const [co, ca] of byKey(all, (x) => x.company)) { rows.push({ _h: `Manufacturer : ${co}` }); for (const [cat, arr] of byKey(ca, (x) => x.category)) { rows.push({ _h: `   Category : ${cat}` }); arr.sort((x, y) => x.name.localeCompare(y.name)).forEach((x) => rows.push({ code: x.code, name: x.name, ...mk(x) })); rows.push({ name: `Total ${cat}`, _t: 1, ...Object.fromEntries(ks.map((k) => [k, arr.reduce((t, x) => t + mk(x)[k], 0)])) }); } }
   return { cols: [{ k: 'code', t: 'CODE' }, { k: 'name', t: 'ITEM' }, ...per, ...base], rows, grand: sumRows(rows, ks) };
 }
@@ -1923,11 +1835,11 @@ function profitByItem(C, p, avg) {
 // ---------- Reports: screens ----------
 function RangeBar({ mode, a, b, setA, setB, chip, setChip, extra }) {
   const today = ld(new Date()), chips = rangeChips();
-  return <div className="rbar">
+  return <div className={cssReports.rbar}>
     {mode === 'day' && <><button title="Previous day" aria-label="Previous day" onClick={() => setA(addDays(a, -1))}><Ico n="chevr" s={14} className="flip" /></button><input type="date" value={a} onChange={(e) => e.target.value && setA(e.target.value)} /><button title="Next day" aria-label="Next day" onClick={() => setA(addDays(a, 1))}><Ico n="chevr" s={14} /></button><button onClick={() => setA(today)}>Today</button></>}
     {mode === 'asof' && <><label>As of</label><input type="date" value={a} onChange={(e) => e.target.value && setA(e.target.value)} /></>}
-    {mode === 'range' && <><div className="dr"><Ico n="cal" s={16} /><input type="date" value={a} onChange={(e) => { setA(e.target.value); setChip(''); }} /><span>→</span><input type="date" value={b} onChange={(e) => { setB(e.target.value); setChip(''); }} /></div>
-      {Object.keys(chips).map((k) => <button key={k} className={chip === k ? 'chip on' : 'chip'} onClick={() => { setA(chips[k][0]); setB(chips[k][1]); setChip(k); }}>{k}</button>)}</>}
+    {mode === 'range' && <><div className={cssSurfaces.dr}><Ico n="cal" s={16} /><input type="date" value={a} onChange={(e) => { setA(e.target.value); setChip(''); }} /><span>→</span><input type="date" value={b} onChange={(e) => { setB(e.target.value); setChip(''); }} /></div>
+      {Object.keys(chips).map((k) => <button key={k} className={chip === k ? `${cssButtons.chip} on` : cssButtons.chip} onClick={() => { setA(chips[k][0]); setB(chips[k][1]); setChip(k); }}>{k}</button>)}</>}
     {extra}</div>;
 }
 function ReportViewer({ rid, onClose }) {
@@ -1944,11 +1856,11 @@ function ReportViewer({ rid, onClose }) {
   const ql = q.trim().toLowerCase(), rows = ql ? out.rows.filter((r) => !r._h && !r._t && Object.values(r).join(' ').toLowerCase().includes(ql)) : out.rows, grand = ql ? null : out.grand;
   const sub = def.mode === 'day' ? dmy(a) : def.mode === 'asof' ? 'As of ' + dmy(a) : `${dmy(a)} to ${dmy(b)}`, n = rows.filter((r) => !r._h && !r._t).length;
   return <>
-    <div className="rhead"><button onClick={onClose} aria-label="Back to Reports Center"><Ico n="chevr" s={14} className="flip" /> Reports Center</button><h3>{def.t}</h3></div>
-    <RangeBar mode={def.mode} a={a} b={b} setA={setA} setB={setB} chip={chip} setChip={setChip} extra={<><span className="grow" /><div className="gsw rsearch"><Ico n="search" s={15} className="gsi" /><input placeholder="Filter rows" value={q} onChange={(e) => setQ(e.target.value)} /></div></>} />
-    {out.note && <p className="rnote">{out.note}</p>}
-    <div className="rwrap"><RTable cols={out.cols} rows={rows} grand={grand} /></div>
-    <div className="rfoot">{n.toLocaleString()} rows</div>
+    <div className={cssReports.rhead}><button onClick={onClose} aria-label="Back to Reports Center"><Ico n="chevr" s={14} className="flip" /> Reports Center</button><h3>{def.t}</h3></div>
+    <RangeBar mode={def.mode} a={a} b={b} setA={setA} setB={setB} chip={chip} setChip={setChip} extra={<><span className="grow" /><div className={`${cssSearch.gsw} ${cssSearch.rsearch}`}><Ico n="search" s={15} className={cssSearch.gsi} /><input placeholder="Filter rows" value={q} onChange={(e) => setQ(e.target.value)} /></div></>} />
+    {out.note && <p className={cssReports.rnote}>{out.note}</p>}
+    <div className={cssReports.rwrap}><RTable cols={out.cols} rows={rows} grand={grand} /></div>
+    <div className={cssTables.rfoot}>{n.toLocaleString()} rows</div>
     <ActionBar onCsv={() => csvDownload(def.t.replace(/\W+/g, '-').toLowerCase(), out.cols, rows, grand)} onPdf={() => setPdf(true)} onPrint={() => { setPdf(true); setTimeout(() => window.print(), 250); }} onClose={onClose} />
     {pdf && <PdfView title={def.t} sub={sub} shop={C.shop} onClose={() => setPdf(false)}>{out.note && <p>{out.note}</p>}<RTable cols={out.cols} rows={rows} grand={grand} /></PdfView>}
   </>;
@@ -1967,14 +1879,12 @@ function ReportsCenter({ onClose }) {
     else if (e.key === 'Enter' && flat[sel]) { e.preventDefault(); setOpen(flat[sel].id); }
   };
   return <>
-    <div className="rcenter" tabIndex="0" ref={box} onKeyDown={key}>
-      {groups.map((g) => {
-        const list = REPORTS.filter((r) => r.g === g);
-        return <div key={g}><button className="rtype" onClick={() => setFold({ ...fold, [g]: !fold[g] })} aria-expanded={!fold[g]}><span className="fbox">{fold[g] ? '+' : '−'}</span><span>Type : <b>{g}</b></span><small>{list.length} report{list.length === 1 ? '' : 's'}</small></button>
-          {!fold[g] && list.map((r, i) => { const fi = flat.indexOf(r); return <div key={r.id} className={'rrow' + (fi === sel ? ' sel' : '')} onClick={() => { setSel(fi); setOpen(r.id); }} onMouseEnter={() => setSel(fi)}><span className="rno">{i + 1}</span><span className="grow">{r.t}</span><Ico n="chevr" s={15} /></div>; })}</div>;
-      })}
+    <div className={cssReports.rcenter} tabIndex="0" ref={box} onKeyDown={key}>
+      {groups.map((g) => { const list = REPORTS.filter((r) => r.g === g);
+        return <div key={g}><button className={cssReports.rtype} onClick={() => setFold({ ...fold, [g]: !fold[g] })} aria-expanded={!fold[g]}><span className={cssReports.fbox}>{fold[g] ? '+' : '−'}</span><span>Type : <b>{g}</b></span><small>{list.length} report{list.length === 1 ? '' : 's'}</small></button>
+          {!fold[g] && list.map((r, i) => { const fi = flat.indexOf(r); return <div key={r.id} className={`${cssReports.rrow} rrow` + (fi === sel ? ' sel' : '')} onClick={() => { setSel(fi); setOpen(r.id); }} onMouseEnter={() => setSel(fi)}><span className={cssReports.rno}>{i + 1}</span><span className="grow">{r.t}</span><Ico n="chevr" s={15} /></div>; })}</div>; })}
     </div>
-    <div className="rcfoot"><small className="hint"><kbd>↑↓</kbd> choose a report · <kbd>Enter</kbd> opens it · click a type to fold it away</small><span className="grow" /><button onClick={onClose}>Close</button></div>
+    <div className={cssReports.rcfoot}><small className="hint"><kbd>↑↓</kbd> choose a report · <kbd>Enter</kbd> opens it · click a type to fold it away</small><span className="grow" /><button onClick={onClose}>Close</button></div>
   </>;
 }
 
@@ -1988,19 +1898,19 @@ function StockAnalysis({ onClose }) {
   const cols = [{ k: 'code', t: 'CODE' }, { k: 'name', t: 'ITEM' }, { k: 'opening', t: 'OPENING', n: 'q' }, { k: 'purchased', t: 'PURCHASED', n: 'q' }, { k: 'sold', t: 'SOLD', n: 'q' }, { k: 'returned', t: 'RETURNED', n: 'q' }, { k: 'adjusted', t: 'ADJUSTED', n: 'q' }, { k: 'closing', t: 'CLOSING', n: 'q' }, { k: 'avg', t: 'AVG/DAY', n: 'q' }, { k: 'days', t: 'DAYS OF STOCK', n: 's' }];
   const chips = rangeChips();
   return <>
-    <div className="rbar card" style={{ padding: 12 }}><div className="dr"><Ico n="cal" s={16} /><input type="date" value={a} onChange={(e) => { setA(e.target.value); setChip(''); }} /><span>→</span><input type="date" value={b} onChange={(e) => { setB(e.target.value); setChip(''); }} /></div>
-      {Object.keys(chips).map((k) => <button key={k} className={chip === k ? 'chip on' : 'chip'} onClick={() => { setA(chips[k][0]); setB(chips[k][1]); setChip(k); }}>{k}</button>)}
-      <select value={sort} onChange={(e) => setSort(e.target.value)} style={{ width: 'auto' }}>{Object.keys(SORT).map((k) => <option key={k}>{k}</option>)}</select><span className="grow" /><div className="gsw rsearch"><Ico n="search" s={15} className="gsi" /><input placeholder="Find an item" value={q} onChange={(e) => setQ(e.target.value)} /></div></div>
-    <p className="rnote">Days of stock = closing stock ÷ average daily sale in this period. Low numbers need reordering or baking soon.</p>
-    <div className="rwrap tall"><RTable cols={cols} rows={rows} cls="sa" /></div><div className="rfoot"><b>{rows.length.toLocaleString()} items</b></div>
+    <div className={`${cssReports.rbar} ${cssSurfaces.card}`} style={{ padding: 12 }}><div className={cssSurfaces.dr}><Ico n="cal" s={16} /><input type="date" value={a} onChange={(e) => { setA(e.target.value); setChip(''); }} /><span>→</span><input type="date" value={b} onChange={(e) => { setB(e.target.value); setChip(''); }} /></div>
+      {Object.keys(chips).map((k) => <button key={k} className={chip === k ? `${cssButtons.chip} on` : cssButtons.chip} onClick={() => { setA(chips[k][0]); setB(chips[k][1]); setChip(k); }}>{k}</button>)}
+      <select value={sort} onChange={(e) => setSort(e.target.value)} style={{ width: 'auto' }}>{Object.keys(SORT).map((k) => <option key={k}>{k}</option>)}</select><span className="grow" /><div className={`${cssSearch.gsw} ${cssSearch.rsearch}`}><Ico n="search" s={15} className={cssSearch.gsi} /><input placeholder="Find an item" value={q} onChange={(e) => setQ(e.target.value)} /></div></div>
+    <p className={cssReports.rnote}>Days of stock = closing stock ÷ average daily sale in this period. Low numbers need reordering or baking soon.</p>
+    <div className={`${cssReports.rwrap} tall`}><RTable cols={cols} rows={rows} cls="sa" /></div><div className={cssTables.rfoot}><b>{rows.length.toLocaleString()} items</b></div>
     <ActionBar onCsv={() => csvDownload('stock-analysis', cols, rows)} onPdf={() => setPdf(true)} onPrint={() => { setPdf(true); setTimeout(() => window.print(), 250); }} onClose={onClose} />
     {pdf && <PdfView title="Stock Analysis" sub={`${dmy(a)} to ${dmy(b)} · ${sort}`} shop={C.shop} onClose={() => setPdf(false)}><RTable cols={cols} rows={rows} /></PdfView>}
   </>;
 }
 
 function SRList({ name, all, sel, setSel }) {
-  return <div className="slist"><div className="slh"><b>{name}</b><small>{sel.size} of {all.length}</small><span className="grow" /><button onClick={() => setSel(new Set(all))}>Select All</button><button onClick={() => setSel(new Set())}>Clear</button></div>
-    <div className="slb"><table style={{ width: '100%' }}><thead><tr><th style={{ width: 90 }}>SELECTION</th><th>DESCRIPTION</th></tr></thead><tbody>{all.map((x) => <tr key={x}><td style={{ textAlign: 'center' }}><input type="checkbox" checked={sel.has(x)} onChange={(e) => { const n = new Set(sel); e.target.checked ? n.add(x) : n.delete(x); setSel(n); }} /></td><td>{x}</td></tr>)}</tbody></table></div></div>;
+  return <div className={cssReports.slist}><div className={cssReports.slh}><b>{name}</b><small>{sel.size} of {all.length}</small><span className="grow" /><button onClick={() => setSel(new Set(all))}>Select All</button><button onClick={() => setSel(new Set())}>Clear</button></div>
+    <div className={cssReports.slb}><table style={{ width: '100%' }}><thead><tr><th style={{ width: 90 }}>SELECTION</th><th>DESCRIPTION</th></tr></thead><tbody>{all.map((x) => <tr key={x}><td style={{ textAlign: 'center' }}><input type="checkbox" checked={sel.has(x)} onChange={(e) => { const n = new Set(sel); e.target.checked ? n.add(x) : n.delete(x); setSel(n); }} /></td><td>{x}</td></tr>)}</tbody></table></div></div>;
 }
 const SR_TYPES = [['sales', 'Sales Summary'], ['purchases', 'Purchase Summary'], ['returns', 'Sales Return Summary'], ['pret', 'Purchase Return Summary']];
 function SalesReport({ onClose }) {
@@ -2015,25 +1925,25 @@ function SalesReport({ onClose }) {
   for (const [k1, arr1] of byKey(rowsAll, (x) => x[o1])) { rows.push({ _h: `${o1 === 'company' ? 'Company' : 'Category'} : ${k1}` }); for (const [k2, arr2] of byKey(arr1, (x) => x[o2])) { rows.push({ _h: `   ${o2 === 'company' ? 'Company' : 'Category'} : ${k2}` }); arr2.sort((x, y) => x.name.localeCompare(y.name)).forEach((x) => rows.push({ code: x.code, name: x.name, qty: x.qty, net: x.net })); rows.push({ name: `Total ${k2}`, _t: 1, qty: arr2.reduce((t, x) => t + x.qty, 0), net: arr2.reduce((t, x) => t + x.net, 0) }); } }
   const cols = [{ k: 'code', t: 'CODE' }, { k: 'name', t: 'ITEM' }, { k: 'qty', t: 'QTY', n: 'q' }, { k: 'net', t: 'AMOUNT', n: 'm' }], grand = sumRows(rows, ['qty', 'net']), title = SR_TYPES.find((x) => x[0] === type)[1];
   return <>
-    <div className="srgrid"><div className="srleft"><SRList name="COMPANIES" all={cos} sel={sc} setSel={setSelCo} /><SRList name="CATEGORIES" all={cas} sel={sa} setSel={setSelCa} /></div>
+    <div className={cssReports.srgrid}><div className={cssReports.srleft}><SRList name="COMPANIES" all={cos} sel={sc} setSel={setSelCo} /><SRList name="CATEGORIES" all={cas} sel={sa} setSel={setSelCa} /></div>
       <div className="srright">
-        <div className="rbar"><div><label>From</label><input type="date" value={a} onChange={(e) => setA(e.target.value)} /></div><div><label>To</label><input type="date" value={b} onChange={(e) => setB(e.target.value)} /></div></div>
-        <fieldset className="fs"><legend>Type of Report</legend>{SR_TYPES.map(([k, l]) => <label key={k} className="rad"><input type="radio" checked={type === k} onChange={() => setType(k)} /> {l}</label>)}</fieldset>
-        <fieldset className="fs"><legend>Order by</legend><label className="rad"><input type="radio" checked={ord === 'co'} onChange={() => setOrd('co')} /> Order by Company then Category</label><label className="rad"><input type="radio" checked={ord === 'ca'} onChange={() => setOrd('ca')} /> Order by Category then Company</label></fieldset>
-        <p className="rnote">{rowsAll.length.toLocaleString()} items in this report.</p>
-        <div className="btns" style={{ justifyContent: 'flex-start' }}><button onClick={() => setPdf(true)}><Ico n="file" s={15} /> View in PDF Mode</button><button onClick={() => { setPdf(true); setTimeout(() => window.print(), 250); }}><Ico n="print" s={15} /> Print</button><button onClick={onClose}>Close</button></div></div></div>
+        <div className={cssReports.rbar}><div><label>From</label><input type="date" value={a} onChange={(e) => setA(e.target.value)} /></div><div><label>To</label><input type="date" value={b} onChange={(e) => setB(e.target.value)} /></div></div>
+        <fieldset className={cssForms.fs}><legend>Type of Report</legend>{SR_TYPES.map(([k, l]) => <label key={k} className={cssForms.rad}><input type="radio" checked={type === k} onChange={() => setType(k)} /> {l}</label>)}</fieldset>
+        <fieldset className={cssForms.fs}><legend>Order by</legend><label className={cssForms.rad}><input type="radio" checked={ord === 'co'} onChange={() => setOrd('co')} /> Order by Company then Category</label><label className={cssForms.rad}><input type="radio" checked={ord === 'ca'} onChange={() => setOrd('ca')} /> Order by Category then Company</label></fieldset>
+        <p className={cssReports.rnote}>{rowsAll.length.toLocaleString()} items in this report.</p>
+        <div className={cssButtons.btns} style={{ justifyContent: 'flex-start' }}><button onClick={() => setPdf(true)}><Ico n="file" s={15} /> View in PDF Mode</button><button onClick={() => { setPdf(true); setTimeout(() => window.print(), 250); }}><Ico n="print" s={15} /> Print</button><button onClick={onClose}>Close</button></div></div></div>
     {pdf && <PdfView title={`Products Transactions · ${title}`} sub={`${dmy(a)} to ${dmy(b)} · ${ord === 'co' ? 'Company then Category' : 'Category then Company'}`} shop={C.shop} onClose={() => setPdf(false)}><RTable cols={cols} rows={rows} grand={grand} /></PdfView>}
   </>;
 }
 
 // ---------- Advance Sales ----------
 function AdvanceReceipt({ pr, shop }) {
-  return <div className="receipt" style={paperVars(shop)}><div className="rc big">{shop.name}</div><hr /><div className="rc sm">Advance Order</div>
-    <div className="rl sm"><span>#{pr.orderNo}</span><span>{pr.date}</span></div><div className="rl sm"><span>Customer</span><span>{pr.customer}</span></div><hr />
-    <div className="rl sm b"><span>DESCRIPTION</span><span>QTY · RATE · AMOUNT</span></div>
-    {pr.items.map((x, i) => <div className="rl sm" key={i}><span>{x.name}</span><span>{x.qty} · {x.rate} · {Math.round(x.qty * x.rate * (1 - (x.disc || 0) / 100))}</span></div>)}<hr />
-    <div className="rl big"><span>Total</span><span>Rs {n2(pr.total)}</span></div>{pr.advance > 0 && <><div className="rl sm"><span>Advance paid</span><span>{n2(pr.advance)}</span></div><div className="rl sm"><span>Balance due</span><span>{n2(pr.total - pr.advance)}</span></div></>}
-    {pr.remarks && <div className="rc sm">{pr.remarks}</div>}<hr /><div className="rc sm">{pr.user}</div></div>;
+  return <div className={cssReceipt.receipt} style={paperVars(shop)}><div className={`${cssReceipt.rc} big`}>{shop.name}</div><hr /><div className={`${cssReceipt.rc} sm`}>Advance Order</div>
+    <div className={`${cssReceipt.rl} sm`}><span>#{pr.orderNo}</span><span>{pr.date}</span></div><div className={`${cssReceipt.rl} sm`}><span>Customer</span><span>{pr.customer}</span></div><hr />
+    <div className={`${cssReceipt.rl} sm b`}><span>DESCRIPTION</span><span>QTY · RATE · AMOUNT</span></div>
+    {pr.items.map((x, i) => <div className={`${cssReceipt.rl} sm`} key={i}><span>{x.name}</span><span>{x.qty} · {x.rate} · {Math.round(x.qty * x.rate * (1 - (x.disc || 0) / 100))}</span></div>)}<hr />
+    <div className={`${cssReceipt.rl} big`}><span>Total</span><span>Rs {n2(pr.total)}</span></div>{pr.advance > 0 && <><div className={`${cssReceipt.rl} sm`}><span>Advance paid</span><span>{n2(pr.advance)}</span></div><div className={`${cssReceipt.rl} sm`}><span>Balance due</span><span>{n2(pr.total - pr.advance)}</span></div></>}
+    {pr.remarks && <div className={`${cssReceipt.rc} sm`}>{pr.remarks}</div>}<hr /><div className={`${cssReceipt.rc} sm`}>{pr.user}</div></div>;
 }
 function OrderEditor({ prods, customers, onClose, onSaved }) {
   const [cust, setCust] = useState(''), [date, setDate] = useState(ld(new Date())), [remarks, setRemarks] = useState(''), [adv, setAdv] = useState(''), [lines, setLines] = useState([]), [name, setName] = useState(''), [sel, setSel] = useState(null), [qty, setQty] = useState(1), [rate, setRate] = useState(''), [disc, setDisc] = useState(0), [hi, setHi] = useState(0), [err, setErr] = useState(''), [busy, setBusy] = useState(false);
@@ -2044,20 +1954,20 @@ function OrderEditor({ prods, customers, onClose, onSaved }) {
   const add = () => { if (!sel) return setErr('Pick a product first.'); if (!(+qty > 0) || rate === '' || +rate < 0) return setErr('Enter a quantity and a price.'); setLines([...lines, { productId: sel.id, name: sel.name, qty: +qty, rate: +rate, disc: +disc || 0 }]); setSel(null); setName(''); setRate(''); setQty(1); setDisc(0); setErr(''); nameRef.current?.focus(); };
   const save = async () => { if (busy) return; setBusy(true); const r = await api('advance', 'POST', { customer: cust, date, remarks, advance: adv, items: lines }); setBusy(false); if (r.error) return setErr(r.error); onSaved(r); };
   useEffect(() => { nameRef.current?.focus(); const k = (e) => { if (e.key === 'Escape') onClose(); else if (acts(e).some((x) => x === 'save' || x === 'save2')) { e.preventDefault(); document.getElementById('ao-save')?.click(); } }; window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k); }, []);
-  return <div className="modal" onClick={onClose}><div className="mbox wide" role="dialog" aria-modal="true" aria-label="New advance order" onClick={(e) => e.stopPropagation()}>
-    <div className="mhead"><b>New advance order</b><button className="px" aria-label="Close" onClick={onClose}><Ico n="x" s={14} /></button></div>
-    <div className="cvrow"><div className="grow"><label>Customer</label><input list="aocust" value={cust} placeholder="Walk-in customer" onChange={(e) => setCust(e.target.value)} /><datalist id="aocust">{customers.map((c) => <option key={c} value={c} />)}</datalist></div>
+  return <div className={cssModals.modal} onClick={onClose}><div className={`${cssModals.mbox} wide`} role="dialog" aria-modal="true" aria-label="New advance order" onClick={(e) => e.stopPropagation()}>
+    <div className={`${cssModals.mhead} mhead`}><b>New advance order</b><button className={cssButtons.px} aria-label="Close" onClick={onClose}><Ico n="x" s={14} /></button></div>
+    <div className={cssForms.cvrow}><div className="grow"><label>Customer</label><input list="aocust" value={cust} placeholder="Walk-in customer" onChange={(e) => setCust(e.target.value)} /><datalist id="aocust">{customers.map((c) => <option key={c} value={c} />)}</datalist></div>
       <div style={{ width: 160 }}><label>Order date</label><input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></div><div style={{ width: 150 }}><label>Advance paid</label><input type="number" min="0" value={adv} placeholder="0.00" onChange={(e) => setAdv(e.target.value)} /></div></div>
     <div><label>Remarks</label><input value={remarks} placeholder="e.g. Birthday cake, pick up at 5 pm" onChange={(e) => setRemarks(e.target.value)} /></div>
-    <div className="cvrow" style={{ position: 'relative' }}><div className="grow" style={{ position: 'relative' }}><label>Product</label><input ref={nameRef} value={name} placeholder="Type the product name" onChange={(e) => { setName(e.target.value); setSel(null); }}
+    <div className={cssForms.cvrow} style={{ position: 'relative' }}><div className="grow" style={{ position: 'relative' }}><label>Product</label><input ref={nameRef} value={name} placeholder="Type the product name" onChange={(e) => { setName(e.target.value); setSel(null); }}
       onKeyDown={(e) => { if (!hits.length) { if (e.key === 'Enter') add(); return; } if (e.key === 'ArrowDown') { e.preventDefault(); setHi((h) => (h + 1) % hits.length); } else if (e.key === 'ArrowUp') { e.preventDefault(); setHi((h) => (h - 1 + hits.length) % hits.length); } else if (e.key === 'Enter') { e.preventDefault(); pick(hits[Math.min(hi, hits.length - 1)]); } }} />
-      {hits.length > 0 && <div className="hits">{hits.map((p, i) => <div key={p.id} className={'hit' + (i === hi ? ' on' : '')} onMouseDown={() => pick(p)}>{p.name} <small>Rs {p.salePrice}</small></div>)}</div>}</div>
+      {hits.length > 0 && <div className={cssModals.hits}>{hits.map((p, i) => <div key={p.id} className={cssModals.hit + (i === hi ? ' on' : '')} onMouseDown={() => pick(p)}>{p.name} <small>Rs {p.salePrice}</small></div>)}</div>}</div>
       <div style={{ width: 80 }}><label>Qty</label><input ref={qtyRef} type="number" min="0" value={qty} onChange={(e) => setQty(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && add()} /></div><div style={{ width: 110 }}><label>Price</label><input type="number" min="0" value={rate} onChange={(e) => setRate(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && add()} /></div>
       <div style={{ width: 80 }}><label>Disc %</label><input type="number" min="0" max="100" value={disc} onChange={(e) => setDisc(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && add()} /></div><button className="pri" onClick={add}>Add</button></div>
-    <div className="vl" style={{ minHeight: 120, maxHeight: 220 }}><table style={{ width: '100%' }}><thead><tr><th>#</th><th>DESCRIPTION</th><th className="num">QTY</th><th className="num">PRICE</th><th className="num">DISC %</th><th className="num">AMOUNT</th><th></th></tr></thead>
+    <div className={cssTables.vl} style={{ minHeight: 120, maxHeight: 220 }}><table style={{ width: '100%' }}><thead><tr><th>#</th><th>DESCRIPTION</th><th className="num">QTY</th><th className="num">PRICE</th><th className="num">DISC %</th><th className="num">AMOUNT</th><th></th></tr></thead>
       <tbody>{!lines.length && <tr><td colSpan="7" className="empty">No items yet.</td></tr>}{lines.map((x, i) => <tr key={i}><td>{i + 1}</td><td>{x.name}</td><td className="num">{x.qty}</td><td className="num">{n2(x.rate)}</td><td className="num">{x.disc}</td><td className="num">{n2(x.qty * x.rate * (1 - x.disc / 100))}</td><td><button aria-label="Remove" onClick={() => setLines(lines.filter((_, j) => j !== i))}><Ico n="x" s={12} /></button></td></tr>)}</tbody></table></div>
     {err && <p className="rerr" role="alert">{err}</p>}
-    <div className="btns" style={{ justifyContent: 'space-between' }}><b style={{ fontSize: 16 }}>Total  Rs {n2(total)}</b><span><button onClick={onClose}>Cancel</button> <button id="ao-save" className="pri" disabled={!lines.length || busy} onClick={save}>Save order <kbd>{KEYS.save}</kbd></button></span></div>
+    <div className={cssButtons.btns} style={{ justifyContent: 'space-between' }}><b style={{ fontSize: 16 }}>Total  Rs {n2(total)}</b><span><button onClick={onClose}>Cancel</button> <button id="ao-save" className="pri" disabled={!lines.length || busy} onClick={save}>Save order <kbd>{KEYS.save}</kbd></button></span></div>
   </div></div>;
 }
 function AdvanceSales({ onClose }) {
@@ -2088,24 +1998,22 @@ function AdvanceSales({ onClose }) {
   const del = async () => { if (!selO) return setMsg({ e: 'Click an order first.' }); if (!window.confirm(`Delete ${selO.orderNo}?`)) return; const r = await api('advance/' + selO.id, 'DELETE'); setMsg(r.error ? { e: r.error } : { ok: 'Order deleted.' }); setSelId(null); load(); };
   const cols = mode === 'sum' || mode === 'tot' ? [{ k: 'k', t: mode === 'tot' ? 'CATEGORY' : 'PRODUCT' }, { k: 'qty', t: 'QTY', n: 'q' }, { k: 'amount', t: 'AMOUNT', n: 'm' }] : null;
   const body = (pdfMode) => mode === 'sum' || mode === 'tot' ? <RTable cols={cols} rows={summ} grand={{ qty: summ.reduce((t, r) => t + r.qty, 0), amount: summ.reduce((t, r) => t + r.amount, 0) }} />
-    : <table className="advt"><thead><tr><th>VOUCHER</th><th>CUSTOMER NAME</th><th>PRODUCT DESCRIPTION</th><th className="num">QTY</th><th className="num">PRICE</th><th className="num">DISC %</th><th className="num">AMOUNT</th><th>USER</th></tr></thead>
+    : <table className={cssReports.advt}><thead><tr><th>VOUCHER</th><th>CUSTOMER NAME</th><th>PRODUCT DESCRIPTION</th><th className="num">QTY</th><th className="num">PRICE</th><th className="num">DISC %</th><th className="num">AMOUNT</th><th>USER</th></tr></thead>
       <tbody>{groups.length === 0 && <tr><td colSpan="8" className="empty">No advance orders{crit ? ' match these filters' : ' yet. Press New Order to take one'}.</td></tr>}
-        {groups.map((g) => {
-          const op = pdfMode || openG[g.key]; return [<tr key={g.key} className={'advhead' + (g.live ? '' : ' done')} onClick={() => setOpenG({ ...openG, [g.key]: !openG[g.key] })}><td colSpan="8"><span className="fbox">{op ? '−' : '+'}</span><b>{g.label}</b><b className="gt2">Total Amount : {n2(g.total)}</b><small>{g.count}</small></td></tr>,
-          ...(op ? g.lines.map((l, i) => <tr key={g.key + i} className={(l.o.id === selId ? 'sel ' : '') + (l.o.posted ? 'posted' : '')} onClick={() => setSelId(l.o.id)}><td className="mono">{l.o.orderNo}</td><td>{l.o.customer}{l.o.posted && <span className="tag Create" style={{ marginLeft: 6 }}>Posted</span>}</td><td>{l.x.name}</td><td className="num">{qf(l.x.qty)}</td><td className="num">{n2(l.x.rate)}</td><td className="num">{l.x.disc || 0}</td><td className="num">{n2(amt(l.x))}</td><td>{l.o.user}</td></tr>) : [])];
-        })}</tbody></table>;
+        {groups.map((g) => { const op = pdfMode || openG[g.key]; return [<tr key={g.key} className={cssReports.advhead + (g.live ? '' : ' done')} onClick={() => setOpenG({ ...openG, [g.key]: !openG[g.key] })}><td colSpan="8"><span className={cssReports.fbox}>{op ? '−' : '+'}</span><b>{g.label}</b><b className="gt2">Total Amount : {n2(g.total)}</b><small>{g.count}</small></td></tr>,
+          ...(op ? g.lines.map((l, i) => <tr key={g.key + i} className={(l.o.id === selId ? 'sel ' : '') + (l.o.posted ? 'posted' : '')} onClick={() => setSelId(l.o.id)}><td className="mono">{l.o.orderNo}</td><td>{l.o.customer}{l.o.posted && <span className={`${cssTables.tag} Create`} style={{ marginLeft: 6 }}>Posted</span>}</td><td>{l.x.name}</td><td className="num">{qf(l.x.qty)}</td><td className="num">{n2(l.x.rate)}</td><td className="num">{l.x.disc || 0}</td><td className="num">{n2(amt(l.x))}</td><td>{l.o.user}</td></tr>) : [])]; })}</tbody></table>;
   return <>
-    <fieldset className="fs wide"><legend>Search Criteria</legend><div className="cvrow" style={{ alignItems: 'flex-end' }}>
+    <fieldset className={`${cssForms.fs} wide`}><legend>Search Criteria</legend><div className={cssForms.cvrow} style={{ alignItems: 'flex-end' }}>
       <div><label>From</label><input type="date" value={from} onChange={(e) => setFrom(e.target.value)} style={{ width: 168 }} /></div><div><label>To</label><input type="date" value={to} onChange={(e) => setTo(e.target.value)} style={{ width: 168 }} /></div>
       <div className="grow"><label>Customer Name</label><input value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && search()} /></div>
       <div style={{ width: 110 }}><label>Invoice From</label><input type="number" min="0" value={iFrom} onChange={(e) => setIFrom(e.target.value)} style={{ textAlign: 'center' }} /></div><div style={{ width: 110 }}><label>Invoice To</label><input type="number" min="0" value={iTo} onChange={(e) => setITo(e.target.value)} style={{ textAlign: 'center' }} /></div>
       <div style={{ width: 110 }}><label>Posted (Y/N)</label><select value={posted} onChange={(e) => setPosted(e.target.value)}><option value=""></option><option value="Y">Y</option><option value="N">N</option></select></div>
       <button onClick={search}><Ico n="search" s={15} /> Search</button><button onClick={clear}>Clear</button></div></fieldset>
-    <div className="vl advwrap">{body(false)}</div>
-    <div className="rfoot">{list.length} order{list.length === 1 ? '' : 's'} · Total Rs {n2(grand)}{selO ? ` · Selected ${selO.orderNo}` : ''}</div>
+    <div className={`${cssTables.vl} ${cssReports.advwrap}`}>{body(false)}</div>
+    <div className={cssTables.rfoot}>{list.length} order{list.length === 1 ? '' : 's'} · Total Rs {n2(grand)}{selO ? ` · Selected ${selO.orderNo}` : ''}</div>
     {msg && <p className={msg.e ? 'rerr' : 'ok'} role={msg.e ? 'alert' : undefined}>{msg.e || msg.ok}</p>}
-    <div className="advfoot"><fieldset className="fs po"><legend>Print Options</legend>{[['date', 'Date Wise'], ['mfr', 'Manufacturer Wise'], ['sum', 'Product Summary'], ['tot', 'Product Totals']].map(([k, l]) => <label key={k} className="rad"><input type="radio" checked={mode === k} onChange={() => setMode(k)} /> {l}</label>)}</fieldset><span className="grow" />
-      <div className="btns" style={{ margin: 0 }}><button onClick={() => setEdit(true)}><Ico n="plus" s={15} /> New Order <kbd>F2</kbd></button><button className="pri" disabled={!selO || selO.posted || busy} onClick={post}><Ico n="up" s={15} /> Post to Sales</button>
+    <div className={cssReports.advfoot}><fieldset className={`${cssForms.fs} po`}><legend>Print Options</legend>{[['date', 'Date Wise'], ['mfr', 'Manufacturer Wise'], ['sum', 'Product Summary'], ['tot', 'Product Totals']].map(([k, l]) => <label key={k} className={cssForms.rad}><input type="radio" checked={mode === k} onChange={() => setMode(k)} /> {l}</label>)}</fieldset><span className="grow" />
+      <div className={cssButtons.btns} style={{ margin: 0 }}><button onClick={() => setEdit(true)}><Ico n="plus" s={15} /> New Order <kbd>F2</kbd></button><button className="pri" disabled={!selO || selO.posted || busy} onClick={post}><Ico n="up" s={15} /> Post to Sales</button>
         <button disabled={!selO} onClick={() => { setPr(selO); setTimeout(() => { window.print(); setPr(null); }, 150); }}><Ico n="print" s={15} /> Print bill</button><button disabled={!selO || selO.posted} onClick={del}><Ico n="trash" s={15} /> Delete</button>
         <button onClick={() => setPdf(true)}><Ico n="file" s={15} /> View in PDF Mode</button><button onClick={() => { setPdf(true); setTimeout(() => window.print(), 250); }}><Ico n="print" s={15} /> Print</button><button onClick={() => load()}><Ico n="refresh" s={15} /> Refresh <kbd>{KEYS.refresh}</kbd></button><button onClick={onClose}>Close</button></div></div>
     {edit && <OrderEditor prods={prods} customers={custs} onClose={() => setEdit(false)} onSaved={(r) => { setEdit(false); setMsg({ ok: `Saved ${r.orderNo} · Rs ${n2(r.total)}` }); setSelId(r.id); load(); }} />}

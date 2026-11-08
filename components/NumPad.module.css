@@ -1,0 +1,25 @@
+/* numpad.module.css — On-screen number pad (components/NumPad.js), shared by the sign-in screen and PIN pop-ups. */
+
+.npad {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:6px;
+}
+
+.npad button {
+  padding:12px 0;
+  font-size:18px;
+  font-weight:600;
+  border:1px solid var(--c-border-input);
+  border-radius:var(--r-sm);
+  background:var(--c-white);
+  color:#1c2230;
+}
+
+.npad button:hover {
+  background:#e9edf6;
+}
+
+.npad button:active {
+  transform:translateY(1px);
+}

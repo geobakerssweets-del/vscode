@@ -1,0 +1,156 @@
+/* ribbon.module.css — Ribbon menu (icon tiles for every screen) and the coloured date bar under it. */
+
+.ribbon {
+  display:flex;
+  gap:6px;
+  overflow-x:auto;
+}
+
+.grp {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding-right:10px;
+}
+
+.items {
+  display:flex;
+  gap:2px;
+}
+
+.rb {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  background:none;
+  border:1px solid transparent;
+  text-align:center;
+}
+
+.ic {
+  display:grid;
+  place-items:center;
+  font-size:16px;
+}
+
+.datebar {
+  color:var(--c-white);
+  text-align:center;
+  font-weight:700;
+}
+
+[data-theme=dark] .ribbon {
+  color:var(--dk-text);
+}
+
+[data-theme=dark] .rb {
+  color:var(--dk-text-soft);
+}
+
+[data-theme=dark] .ic {
+  background:var(--dk-line);
+}
+
+html:global(.ur) .rb {
+  line-height:1.7;
+}
+
+.rb :global(.svg),
+.ic :global(.svg) {
+  margin-right:0;
+}
+
+.ribbon {
+  background:var(--surface);
+  border-bottom:1px solid var(--line);
+  padding:8px 12px 4px;
+  min-height:92px;
+  box-shadow:0 1px 0 var(--line2);
+}
+
+.grp {
+  border-right:1px solid var(--line2);
+  padding:0 10px 0 6px;
+}
+
+.grp small {
+  font-size:11px;
+  color:var(--muted);
+  letter-spacing:.3px;
+  margin-top:3px;
+}
+
+.rb {
+  width:84px;
+  padding:6px 2px 5px;
+  border-radius:var(--r-md);
+  font-size:12px;
+  color:var(--text);
+  gap:5px;
+  box-shadow:none;
+  transition:background var(--ease),transform var(--ease);
+}
+
+.rb:hover {
+  background:var(--surface2);
+  border-color:var(--line2);
+  transform:translateY(-1px);
+  box-shadow:none;
+}
+
+.rb:global(.on) {
+  background:color-mix(in srgb,var(--ac,var(--ac-default)) 10%,var(--c-white));
+  border-color:color-mix(in srgb,var(--ac,var(--ac-default)) 30%,var(--c-white));
+  box-shadow:inset 0 -2px var(--ac,var(--ac-default));
+  font-weight:600;
+}
+
+.ic {
+  width:38px;
+  height:38px;
+  border-radius:11px;
+  background:color-mix(in srgb,var(--tn,#4a5bb5) 13%,var(--surface));
+  color:var(--tn,#4a5bb5);
+  transition:transform var(--ease);
+}
+
+.rb:hover .ic {
+  transform:scale(1.06);
+}
+
+.datebar {
+  background-image:linear-gradient(180deg,rgba(255,255,255,.16),rgba(0,0,0,.14))!important;
+  font-size:14.5px;
+  letter-spacing:.3px;
+  padding:5px;
+  text-shadow:0 1px 1px rgba(0,0,0,.25);
+}
+
+[data-theme=dark] .ribbon {
+  background:var(--surface);
+}
+
+[data-theme=dark] .rb:global(.on) {
+  background:color-mix(in srgb,var(--ac,var(--ac-default)) 22%,var(--surface));
+}
+
+.ic {
+  position:relative;
+}
+
+.rbadge {
+  position:absolute;
+  top:-5px;
+  right:-6px;
+  min-width:17px;
+  height:17px;
+  padding:0 4px;
+  border-radius:9px;
+  background:#d4463a;
+  color:var(--c-white);
+  font:700 10.5px/17px "Segoe UI",sans-serif;
+  font-style:normal;
+  text-align:center;
+  border:2px solid var(--surface);
+  box-sizing:content-box;
+}

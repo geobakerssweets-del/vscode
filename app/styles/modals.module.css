@@ -1,0 +1,150 @@
+/* modals.module.css — Pop-up dialogs, catalogue / suggestion lists, and the hit rows inside them. */
+
+.hit {
+  padding:8px;
+  background:var(--c-white);
+  border:1px solid #dde;
+  cursor:pointer;
+}
+
+.hit:hover,
+.hit:global(.on) {
+  background:#f3e6dc;
+}
+
+.hit small {
+  color:var(--c-text-soft);
+  margin-left:8px;
+}
+
+.cat {
+  align-self:flex-end;
+  padding:7px 10px;
+  border:1px solid #e3c4b4;
+  background:#f6e4da;
+  color:#9a2a0c;
+  border-radius:var(--r-sm);
+  white-space:nowrap;
+}
+
+.modal {
+  position:fixed;
+  inset:0;
+  display:grid;
+  place-items:center;
+  z-index:20;
+}
+
+.mbox {
+  width:min(560px,92vw);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.mlist {
+  max-height:55vh;
+  overflow:auto;
+}
+
+.mbox:global(.wide) {
+  width:min(760px,94vw);
+}
+
+.mbox :global(.npad) {
+  width:210px;
+  align-self:center;
+}
+
+[data-theme=dark] .mbox {
+  background:#161a23;
+  color:var(--dk-text);
+}
+
+.hits {
+  position:absolute;
+  top:100%;
+  left:0;
+  right:0;
+  background:var(--c-white);
+  border:1px solid var(--c-border-input);
+  border-radius:var(--r-sm);
+  z-index:15;
+  box-shadow:0 6px 20px #0003;
+}
+
+.hits .hit {
+  padding:7px 10px;
+  cursor:pointer;
+}
+
+.hits .hit:global(.on),
+.hits .hit:hover {
+  background:#eef1f8;
+}
+
+[data-theme=dark] .hits {
+  background:var(--dk-field);
+  color:var(--dk-text);
+  border-color:var(--dk-field-line);
+}
+
+.modal {
+  background:rgba(15,23,42,.45);
+  backdrop-filter:blur(2px);
+}
+
+.mbox {
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--r-xl);
+  box-shadow:var(--shadow2);
+  padding:18px;
+}
+
+.mhead {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin:-4px 0 12px;
+  font-size:15px;
+}
+
+.hits:global(.wide) {
+  width:max-content;
+  min-width:100%;
+  max-width:min(780px,92vw);
+  max-height:320px;
+  overflow:auto;
+}
+
+.hits:global(.wide) .hit,
+.hit.cat {
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  gap:18px;
+  white-space:normal;
+  word-break:break-word;
+  padding:8px 12px;
+  cursor:pointer;
+}
+
+.hits:global(.wide) .hit small,
+.hit.cat small {
+  color:var(--muted);
+  white-space:nowrap;
+  flex:none;
+}
+
+.hit.cat:hover {
+  background:var(--surface2);
+}
+
+.mbox:global(.wide) .mlist {
+  max-height:55vh;
+  overflow:auto;
+  margin-top:8px;
+  border:1px solid var(--line2);
+  border-radius:var(--r-md);
+}

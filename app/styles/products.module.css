@@ -1,0 +1,97 @@
+/* products.module.css — Define Products and Audit Log screens. */
+
+.pw {
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.pw table {
+  width:100%;
+}
+
+.pr {
+  display:grid;
+  gap:10px;
+  margin-bottom:10px;
+  align-items:end;
+  min-width:1080px;
+}
+
+.r1 {
+  grid-template-columns:110px 90px 150px minmax(200px,1fr) 80px 120px 90px 120px 80px 110px;
+}
+
+.r2 {
+  grid-template-columns:repeat(3,minmax(140px,1.2fr)) minmax(120px,1fr) 90px 90px repeat(5,84px);
+}
+
+.rsw {
+  position:relative;
+}
+
+.rsw span {
+  position:absolute;
+  left:8px;
+  top:9px;
+  font-size:11px;
+  color:#778;
+}
+
+.rsw input {
+  padding-left:26px;
+  text-align:right;
+}
+
+.pbar,
+.pfilters {
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+
+.pbar kbd {
+  margin-left:4px;
+}
+
+.plist {
+  height:calc(100vh - 500px);
+  min-height:220px;
+  overflow:auto;
+  background:var(--c-white);
+  border:1px solid var(--c-border);
+  outline:0;
+}
+
+.plist th {
+  position:sticky;
+  top:0;
+}
+
+.stk {
+  text-align:right;
+  font-weight:700;
+}
+
+.stk:global(.neg) {
+  color:#a35200;
+}
+
+.stk small {
+  color:#778;
+  font-weight:400;
+}
+
+.badge {
+  background:#dbe7fb;
+  color:#1e3a8a;
+  border-radius:4px;
+  padding:0 6px;
+  font-size:11px;
+  font-weight:600;
+}
+
+.plist:focus-visible {
+  outline: 2px solid var(--ac,var(--ac-default));
+  outline-offset: 1px;
+}

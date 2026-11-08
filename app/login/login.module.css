@@ -1,0 +1,250 @@
+/* login.module.css — Sign-in screen. */
+
+.login {
+  min-height:100vh;
+  display:grid;
+  place-items:center;
+  padding:24px;
+  background:#1c1c1c;
+  color:#f2f2f2;
+}
+
+.lwin {
+  width:min(970px,100%);
+  min-height:566px;
+  display:grid;
+  grid-template-columns:276px 1fr;
+  grid-template-rows:auto 1fr;
+  background:#222;
+  border:1px solid #333;
+  border-radius:var(--r-md);
+  overflow:hidden;
+  box-shadow:0 20px 60px #0008;
+}
+
+.lhead {
+  grid-column:1/-1;
+  padding:10px 13px;
+  background:#262626;
+  border-bottom:1px solid #303030;
+  font-size:14px;
+  font-weight:700;
+}
+
+.lside {
+  display:flex;
+  flex-direction:column;
+  padding:22px;
+  color:var(--c-white);
+  background:linear-gradient(180deg,#d35f00,#a84600);
+  border-right:3px solid #8f3b00;
+}
+
+.llogo {
+  width:62px;
+  height:62px;
+  margin-bottom:22px;
+}
+
+.laddr {
+  font-size:12.5px;
+  font-weight:600;
+  line-height:1.6;
+  margin:0 0 14px;
+}
+
+.ltag {
+  font-size:12.5px;
+  line-height:1.75;
+  margin:0;
+}
+
+.ltill {
+  margin-top:auto;
+  padding-top:14px;
+  border-top:1px solid #ffffff40;
+  font-size:12px;
+  font-weight:600;
+}
+
+.lmain {
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  padding:32px clamp(24px,10vw,100px);
+}
+
+.lmain h1 {
+  margin:0 0 4px;
+  font-size:20px;
+  color:#86c5b5;
+}
+
+.lmain p.lhint {
+  margin:0;
+  font-size:13px;
+  color:#cfcfcf;
+}
+
+.lusers {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:20px;
+}
+
+.lusers button,
+.lwho {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  text-align:left;
+  padding:12px 14px;
+  background:#2b2b2b;
+  border:1px solid #3a3a3a;
+  border-radius:var(--r-sm);
+  color:var(--c-white);
+}
+
+.lusers button:hover {
+  border-color:#f57c00;
+  background:#303030;
+}
+
+.av {
+  flex:none;
+  display:grid;
+  place-items:center;
+  width:40px;
+  height:40px;
+  border-radius:50%;
+  background:#43b36a;
+  color:#10261a;
+  font-size:16px;
+  font-weight:700;
+}
+
+.lwho b,
+.lusers b {
+  display:block;
+  font-size:14px;
+}
+
+.lwho div>span,
+.lusers div>span {
+  display:block;
+  font-size:12px;
+  color:#b8b8b8;
+  margin-top:2px;
+}
+
+.lpin {
+  margin-top:20px;
+  display:grid;
+  grid-template-columns:1fr 216px;
+  gap:8px 22px;
+  align-items:start;
+}
+
+.lcol {
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  min-width:0;
+}
+
+.lpin :global(.npad) {
+  margin-top:30px;
+}
+
+.lpin label {
+  color:#cfcfcf;
+  font-size:13px;
+  margin:6px 0 0;
+}
+
+.lpin input {
+  padding:11px 12px;
+  font-size:20px;
+  letter-spacing:6px;
+  background:#2b2b2b;
+  border:1px solid #4a4a4a;
+  color:var(--c-white);
+}
+
+.lpin input:focus {
+  outline:2px solid #f57c00;
+  outline-offset:1px;
+}
+
+.lpin button:global(.pri) {
+  margin-top:6px;
+  padding:11px;
+  background:#f57c00;
+  color:#1a1204;
+  font-weight:700;
+  font-size:14px;
+}
+
+.lpin button:global(.pri):disabled {
+  opacity:.5;
+  cursor:default;
+}
+
+.lpin button.lback {
+  align-self:flex-start;
+  background:none;
+  border:0;
+  padding:4px 0;
+  color:#86c5b5;
+  font-size:13px;
+}
+
+.lerr {
+  margin:2px 0 0;
+  color:#ff8a80;
+  font-size:13px;
+}
+
+.lwin button:focus-visible {
+  outline:2px solid var(--c-white);
+  outline-offset:2px;
+}
+
+@media(max-width:720px) {
+  .lpin {
+    grid-template-columns:1fr;
+  }
+  .lpin :global(.npad) {
+    margin-top:0;
+    max-width:260px;
+  }
+  .lwin {
+    grid-template-columns:1fr;
+    min-height:0;
+  }
+  .lside {
+    border-right:0;
+    border-bottom:3px solid #8f3b00;
+  }
+  .llogo {
+    margin-bottom:12px;
+  }
+  .lusers {
+    grid-template-columns:1fr;
+  }
+  .lmain {
+    padding:28px 20px;
+  }
+}
+
+.lwin :global(.npad) button {
+  background:#2b2b2b;
+  border-color:#3a3a3a;
+  color:var(--c-white);
+}
+
+.lwin :global(.npad) button:hover {
+  border-color:#f57c00;
+  background:#303030;
+}

@@ -1,0 +1,205 @@
+/* tables.module.css — Reusable table pieces: report table, scrolling grids, totals bars, tags, detail totals, status line. */
+
+.tag {
+  font-size:11px;
+  font-weight:600;
+}
+
+.tag:global(.Create) {
+  background:#dcf5df;
+  color:#166534;
+}
+
+.tag:global(.Update) {
+  background:#dbe7fb;
+  color:#1e3a8a;
+}
+
+.tag:global(.Delete) {
+  background:#fbdcdc;
+  color:#991b1b;
+}
+
+.status {
+  font-size:11px;
+  color:#556;
+  padding:4px 8px;
+}
+
+.grand {
+  display:flex;
+  gap:28px;
+  align-items:center;
+  color:var(--c-white);
+  padding:8px 12px;
+  font-size:12px;
+}
+
+.tag:global(.Credit) {
+  background:#fde7cf;
+  color:#9a3412;
+}
+
+.dtot {
+  margin-left:auto;
+  width:340px;
+}
+
+.dtot>div {
+  display:flex;
+  justify-content:space-between;
+  padding:3px 0;
+}
+
+.dtot i {
+  font-style:normal;
+}
+
+.dtot :global(.b) {
+  font-size:18px;
+  font-weight:700;
+}
+
+.rlines {
+  border-bottom:0;
+}
+
+.rlines:focus {
+  outline:2px solid #b4300f55;
+  outline-offset:-2px;
+}
+
+.rlines table {
+  border:0;
+}
+
+.rlines tr {
+  cursor:default;
+}
+
+.rlines tr:global(.sel) td {
+  background:#fdeee8;
+}
+
+.rlines tr:global(.sel) td:first-child {
+  box-shadow:inset 3px 0 #b4300f;
+}
+
+.rlines tr:global(.editing) td {
+  background:#fff4cc;
+}
+
+.vl table {
+  border:0;
+}
+
+.vl th {
+  position:sticky;
+  top:0;
+  background:#eef1f8;
+  z-index:1;
+}
+
+.vl tr:global(.sel) td {
+  background:#fdeee8;
+}
+
+.vl {
+  min-height:210px;
+  background:var(--c-white);
+  border:1px solid var(--c-border);
+  border-radius:var(--r-sm) var(--r-sm) 0 0;
+  border-bottom:0;
+  overflow:auto;
+}
+
+[data-theme=dark] .vl {
+  background:var(--dk-panel);
+  border-color:var(--dk-line);
+}
+
+[data-theme=dark] .vl th {
+  background:#222938;
+}
+
+.status {
+  background:var(--surface);
+  border-top:2px solid var(--ac,var(--ac-default));
+}
+
+.grand {
+  background:var(--ac,#1b6b1f);
+  border-radius:0 0 var(--r-md) var(--r-md);
+  font-weight:600;
+}
+
+.tag {
+  border-radius:var(--r-pill);
+  padding:2px 10px;
+}
+
+.rt {
+  width:100%;
+  box-shadow:none;
+  border:0;
+  border-radius:0;
+}
+
+.rt th {
+  position:sticky;
+  top:0;
+  z-index:1;
+}
+
+.rt .rgh td {
+  background:color-mix(in srgb,var(--ac,var(--ac-default)) 12%,var(--surface));
+  font-weight:700;
+  color:var(--ac,var(--ac-default));
+}
+
+.rt .rst td {
+  font-weight:700;
+  background:var(--surface2);
+  border-top:1px solid var(--line);
+}
+
+.rt .rgt td {
+  font-weight:700;
+  background:var(--ac,var(--ac-default));
+  color:var(--c-white);
+  border:0;
+}
+
+.rfoot {
+  padding:7px 12px;
+  background:var(--surface2);
+  border:1px solid var(--line);
+  border-top:0;
+  border-radius:0 0 var(--r-md) var(--r-md);
+  color:var(--muted);
+  margin-bottom:6px;
+}
+
+:global(.preport-page) .rt th {
+  position:static;
+}
+
+.rlines {
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:0 0 0 0;
+  min-height:230px;
+}
+
+.status {
+  display:flex;
+  justify-content:space-between;
+  border-radius:0 0 var(--r-md) var(--r-md);
+}
+
+:global(.phx) .rfoot {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin:-10px 0 0;
+}

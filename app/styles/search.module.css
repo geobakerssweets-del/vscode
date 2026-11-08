@@ -1,0 +1,100 @@
+/* search.module.css — Global search box in the top bar, its results list, and the compact filter box used by report screens. */
+
+.gs {
+  width:300px;
+  padding:5px 10px;
+  border-radius:14px;
+  margin-right:8px;
+}
+
+.rsearch {
+  background:none;
+  border:0;
+  font-size:16px;
+  padding:4px 6px;
+}
+
+.gsw {
+  margin-right:8px;
+}
+
+.gsw .gs {
+  margin:0;
+}
+
+.sres {
+  position:absolute;
+  top:100%;
+  right:0;
+  left:0;
+  background:var(--c-white);
+  border:1px solid var(--c-border-input);
+  z-index:40;
+  margin-top:4px;
+  overflow:hidden;
+}
+
+.sres div {
+  padding:8px 12px;
+  cursor:pointer;
+}
+
+.sres div:hover {
+  background:#eef1f8;
+}
+
+.sres small {
+  color:var(--c-text-soft);
+}
+
+[data-theme=dark] .sres {
+  background:var(--dk-field);
+  color:var(--dk-text);
+  border-color:var(--dk-field-line);
+}
+
+.gsi,
+.sres :global(.svg) {
+  margin-right:0;
+}
+
+.gsw {
+  display:flex;
+  align-items:center;
+  position:relative;
+  margin:4px 8px 5px 0;
+}
+
+.gsw .gs {
+  padding:6px 12px 6px 32px;
+  border-radius:var(--r-pill);
+  background:var(--surface);
+  width:330px;
+}
+
+.gsi {
+  position:absolute;
+  left:11px;
+  color:var(--muted);
+  pointer-events:none;
+}
+
+.sres {
+  border-radius:var(--r-lg);
+  box-shadow:var(--shadow2);
+}
+
+.sres div {
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.rsearch {
+  margin:0!important;
+}
+
+.rsearch .gs,
+.rsearch input {
+  width:230px;
+}

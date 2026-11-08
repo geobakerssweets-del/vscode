@@ -1,0 +1,271 @@
+/* buttons.module.css — Reusable button styles: chips, segmented controls, switches, link buttons, button rows, type toggle, small icon buttons. */
+
+.chip {
+  border:1px solid var(--c-border-input);
+  background:var(--c-white);
+}
+
+.typebtn {
+  width:100%;
+  padding:7px;
+  border:1px solid var(--c-border-input);
+  font-weight:700;
+  background:var(--c-white);
+  color:#166534;
+}
+
+.btns {
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+  margin-top:12px;
+}
+
+.btns button:not(:global(.pri)) {
+  padding:8px 14px;
+  border:1px solid var(--c-border-input);
+  border-radius:var(--r-sm);
+  background:var(--c-white);
+}
+
+.typebtn {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  text-align:left;
+}
+
+.typebtn small {
+  color:var(--c-text-soft);
+  font-size:11px;
+}
+
+.typebtn:global(.rt) {
+  color:#b4300f;
+}
+
+.btns kbd {
+  margin-left:6px;
+  font-size:10px;
+}
+
+.btns :global(.pri) kbd {
+  background:#ffffff22;
+  border-color:#ffffff44;
+  color:var(--c-white);
+}
+
+.seg {
+  display:flex;
+  border:1px solid var(--c-border-input);
+  overflow:hidden;
+}
+
+.seg button:global(.on) {
+  font-weight:700;
+}
+
+.btnlike {
+  display:inline-block;
+  margin:0;
+  padding:8px 14px;
+  border:1px solid var(--c-border-input);
+  background:var(--c-white);
+  cursor:pointer;
+  color:#1c2230;
+  font-size:13px;
+}
+
+.sw {
+  width:50px;
+  height:26px;
+  border-radius:13px;
+  background:var(--dk-text-soft);
+  position:relative;
+}
+
+.sw i {
+  position:absolute;
+  top:3px;
+  left:3px;
+  width:20px;
+  height:20px;
+  border-radius:50%;
+  background:var(--c-white);
+  transition:.15s;
+}
+
+.sw:global(.on) i {
+  left:27px;
+}
+
+[data-theme=dark] .chip,
+[data-theme=dark] .seg,
+[data-theme=dark] .btnlike {
+  background:var(--dk-field);
+  color:var(--dk-text);
+  border-color:var(--dk-field-line);
+}
+
+.px :global(.svg),
+.chip :global(.svg) {
+  margin-right:0;
+}
+
+.chip:global(.on),
+.seg button:global(.on) {
+  background:var(--pri,var(--ac,var(--ac-default)))!important;
+  border-color:var(--pri,var(--ac,var(--ac-default)))!important;
+  color:var(--c-white)!important;
+}
+
+.lnk {
+  padding:0;
+  border:0;
+  background:none;
+  color:var(--ac,var(--ac-default));
+  font-weight:600;
+}
+
+.lnk:hover {
+  background:none;
+  box-shadow:none;
+  text-decoration:underline;
+}
+
+.chip {
+  border-radius:var(--r-pill);
+  padding:5px 13px;
+  font-size:12px;
+}
+
+.typebtn {
+  border-radius:var(--r-sm);
+}
+
+.typebtn:global(.CREDIT) {
+  color:#b4443a;
+}
+
+.px {
+  display:grid;
+  place-items:center;
+  width:20px;
+  height:20px;
+  padding:0;
+  border:0;
+  border-radius:50%;
+  background:none;
+  color:var(--muted);
+  box-shadow:none;
+}
+
+.px:hover:not(:disabled) {
+  background:#e9d4d2!important;
+  color:#b4443a;
+  box-shadow:none;
+}
+
+.seg:global(.months) {
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding:3px 12px;
+  background:var(--surface2);
+}
+
+.seg:global(.months):global(.act) {
+  outline:2px solid color-mix(in srgb,var(--ac,var(--ac-default)) 40%,transparent);
+}
+
+.seg:global(.months) button {
+  width:26px;
+  padding:2px 0;
+  border:1px solid var(--line);
+  border-radius:var(--r-sm);
+  background:var(--surface);
+}
+
+.seg:global(.months) b {
+  min-width:26px;
+  text-align:center;
+}
+
+.seg:global(.months) span {
+  color:var(--muted);
+}
+
+.seg:global(.sm) button {
+  padding:5px 12px;
+  font-size:12px;
+}
+
+.seg {
+  border-radius:var(--r-md);
+  border-color:var(--line);
+  background:var(--surface);
+  box-shadow:none;
+}
+
+.seg button {
+  border:0;
+  border-right:1px solid var(--line2);
+  border-radius:0;
+  box-shadow:none;
+  padding:7px 16px;
+  background:var(--surface);
+}
+
+.seg button:last-child {
+  border-right:0;
+}
+
+.sw {
+  border:0;
+  box-shadow:none;
+  padding:0;
+}
+
+.sw:hover:not(:disabled) {
+  background:var(--dk-text-soft);
+  box-shadow:none;
+}
+
+.sw:global(.on),
+.sw:global(.on):hover:not(:disabled) {
+  background:var(--pri,var(--ac,var(--ac-default)));
+}
+
+.btnlike {
+  border-radius:var(--r-sm);
+}
+
+:global(.mhead) .px {
+  margin:0;
+}
+
+.typebtn small {
+  display:block;
+  font-weight:400;
+}
+
+.chip:global(.sq) {
+  border-radius:var(--r-sm);
+  padding:7px 14px;
+  font-weight:600;
+}
+
+:global(.hf) .typebtn {
+  width:100%;
+  height:36px;
+}
+
+:global(.phx) .btns {
+  justify-content:flex-end;
+  margin:0;
+}
+
+[data-theme=dark] .chip:hover:not(:disabled) {
+  background: var(--surface2);
+  border-color: #b9c3d3;
+}

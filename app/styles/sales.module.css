@@ -1,0 +1,199 @@
+/* sales.module.css — Sales Invoice and Sales Return screens (bill header, entry row, totals). */
+
+.entry {
+  display:flex;
+  gap:8px;
+  align-items:flex-end;
+  margin-bottom:10px;
+}
+
+.drop {
+  position:absolute;
+  z-index:5;
+  left:0;
+  right:0;
+  box-shadow:0 6px 16px #0002;
+}
+
+.hdr {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px 24px;
+  margin-bottom:10px;
+}
+
+.fl {
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.fl label {
+  width:105px;
+  text-align:right;
+  font-weight:600;
+  margin:0;
+}
+
+.entry label {
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.5px;
+}
+
+.bottom {
+  display:flex;
+  justify-content:space-between;
+  gap:20px;
+  margin-top:10px;
+}
+
+.bl>div,
+.br>div {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding:3px 0;
+}
+
+.bl {
+  width:260px;
+  font-weight:600;
+  font-size:12px;
+}
+
+.bl i,
+.br i {
+  font-style:normal;
+  border:1px solid #e0e5f0;
+  padding:5px 10px;
+  min-width:110px;
+  text-align:right;
+}
+
+.bl i:global(.g) {
+  background:#e3f5e6;
+}
+
+.br {
+  width:460px;
+}
+
+.br input {
+  width:110px;
+  text-align:right;
+}
+
+.br :global(.net) {
+  font-size:20px;
+  font-weight:700;
+}
+
+.fl:global(.wide) {
+  grid-column:1/-1;
+}
+
+.fl:global(.wide) .billin {
+  flex:none;
+  width:min(660px,55%);
+}
+
+.fl:global(.wide) :global(.hint) {
+  flex:1;
+}
+
+.billin {
+  background:#fffbe6;
+  font-family:"Courier New",monospace;
+}
+
+.pfx {
+  position:relative;
+}
+
+.pfx span {
+  position:absolute;
+  left:9px;
+  top:50%;
+  transform:translateY(-50%);
+  color:var(--c-text-soft);
+  font-size:12px;
+  pointer-events:none;
+}
+
+.pfx input {
+  text-align:right;
+  padding-left:28px;
+}
+
+.pfx.sfx span {
+  left:auto;
+  right:9px;
+}
+
+.pfx.sfx input {
+  padding-left:9px;
+  padding-right:24px;
+}
+
+.rsel {
+  width:auto;
+  padding:4px 6px;
+}
+
+.bl i:global(.pay) {
+  font-weight:700;
+}
+
+.hdr .fl label {
+  width:118px;
+  white-space:nowrap;
+}
+
+.entry {
+  background:var(--surface);
+  border:1px solid var(--line);
+  box-shadow:var(--shadow);
+  border-radius:var(--r-lg);
+  padding:10px;
+}
+
+.bl i,
+.br i {
+  border-radius:var(--r-sm);
+  background:var(--surface);
+  border-color:var(--line);
+}
+
+.br :global(.net) {
+  background:color-mix(in srgb,var(--ac,var(--ac-default)) 10%,var(--surface));
+  color:var(--ac,var(--ac-default));
+}
+
+/* Sales Return item list: the table itself is the list (no wrapper box); the status line sits right under it */
+.rlist {
+  border-bottom:0;
+  border-radius:var(--r-md) var(--r-md) 0 0;
+}
+
+.rlist:focus {
+  outline:2px solid #b4300f55;
+  outline-offset:-2px;
+}
+
+.rlist tr {
+  cursor:default;
+}
+
+.rlist tr:global(.sel) td {
+  background:#fdeee8;
+}
+
+.rlist tr:global(.sel) td:first-child {
+  box-shadow:inset 3px 0 #b4300f;
+}
+
+.rlist tr:global(.editing) td {
+  background:#fff4cc;
+}

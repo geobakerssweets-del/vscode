@@ -1,0 +1,142 @@
+/* cash.module.css — Cash Payment / Cash Receipt vouchers and the Cash Book. */
+
+.cv {
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.cvtop {
+  display:flex;
+  align-items:center;
+  gap:22px;
+  flex-wrap:wrap;
+}
+
+.cih b {
+  color:#b4300f;
+  font-size:15px;
+}
+
+.cih {
+  color:#b4300f;
+}
+
+.cvsb {
+  border:1px solid var(--c-border);
+  border-radius:var(--r-md);
+  padding:2px 14px 6px;
+  display:flex;
+  gap:16px;
+}
+
+.cvsb legend {
+  font-size:12px;
+  color:#556;
+  padding:0 4px;
+}
+
+.cvsb label {
+  display:flex;
+  gap:6px;
+  align-items:center;
+  margin:0;
+  font-weight:400;
+}
+
+.cvsb input {
+  width:auto;
+}
+
+.acl {
+  max-height:164px;
+  overflow:auto;
+  border:1px solid var(--c-border);
+  background:var(--c-white);
+  border-radius:var(--r-sm);
+}
+
+.acl table {
+  border:0;
+}
+
+.acl th {
+  position:sticky;
+  top:0;
+  background:#eef1f8;
+  z-index:1;
+}
+
+.acl tr {
+  cursor:pointer;
+}
+
+.acl tr:global(.sel) td {
+  background:#fdeee8;
+}
+
+.acl tr:global(.sel) td:first-child {
+  box-shadow:inset 3px 0 var(--ac);
+}
+
+.vfoot {
+  display:flex;
+  align-items:center;
+  margin-top:-8px;
+  border:1px solid var(--c-border);
+  background:var(--c-white);
+  padding-left:14px;
+  border-radius:0 0 var(--r-sm) var(--r-sm);
+}
+
+.vtot {
+  display:flex;
+  justify-content:space-between;
+  gap:30px;
+  min-width:420px;
+  padding:10px 14px;
+  background:var(--ac);
+  color:var(--c-white);
+  font-size:15px;
+}
+
+.vtot span {
+  font-size:18px;
+  font-weight:700;
+}
+
+.cbt .cbop td {
+  background:#fdeee8;
+  font-weight:700;
+}
+
+.cbt tbody tr:nth-child(even):not(.cbop) td {
+  background:#fffbea;
+}
+
+.cbt tfoot .cbtot td {
+  background:var(--ac,#2347b0);
+  color:var(--c-white);
+  font-weight:700;
+  font-size:14px;
+  padding:10px 8px;
+}
+
+[data-theme=dark] .acl,
+[data-theme=dark] .vfoot {
+  background:var(--dk-panel);
+  border-color:var(--dk-line);
+}
+
+[data-theme=dark] .acl th {
+  background:#222938;
+}
+
+[data-theme=dark] .cbt tbody tr:nth-child(even):not(.cbop) td {
+  background:#1d2230;
+}
+
+:global(.preport-page) .cbtot td {
+  background:#2347b0!important;
+  color:var(--c-white)!important;
+}

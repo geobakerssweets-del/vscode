@@ -1,0 +1,258 @@
+/* reports.module.css — Reports Center, report viewer, Stock Analysis, Sales Report and Advance Sales. */
+
+.rbar {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-bottom:8px;
+}
+
+.rbar>div>label {
+  display:block;
+  margin-bottom:3px;
+}
+
+.rbar input[type=date] {
+  width:150px;
+}
+
+.rhead {
+  display:flex;
+  align-items:center;
+  gap:14px;
+  margin-bottom:10px;
+}
+
+.rhead h3 {
+  margin:0;
+  font-size:16px;
+}
+
+.rhead button {
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+}
+
+.rnote {
+  margin:6px 0 8px;
+  color:var(--muted);
+  font-size:12px;
+}
+
+.rwrap {
+  max-height:calc(100vh - 360px);
+  min-height:220px;
+  overflow:auto;
+  border-radius:var(--radius);
+  background:var(--surface);
+}
+
+.rwrap:global(.tall) {
+  max-height:calc(100vh - 340px);
+}
+
+.rcenter {
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--r-lg);
+  overflow:auto;
+  max-height:calc(100vh - 290px);
+  outline:none;
+  box-shadow:var(--shadow);
+}
+
+.rtype {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  width:100%;
+  text-align:left;
+  border:0;
+  border-radius:0;
+  padding:10px 14px;
+  background:color-mix(in srgb,var(--ac,var(--ac-default)) 14%,var(--surface));
+  color:var(--text);
+  font-weight:400;
+  box-shadow:none;
+  border-bottom:1px solid var(--line2);
+}
+
+.rtype:hover:not(:disabled) {
+  background:color-mix(in srgb,var(--ac,var(--ac-default)) 20%,var(--surface));
+  box-shadow:none;
+}
+
+.rtype small {
+  color:var(--muted);
+}
+
+.fbox {
+  display:inline-grid;
+  place-items:center;
+  width:16px;
+  height:16px;
+  border:1px solid currentColor;
+  border-radius:3px;
+  font:700 13px/1 monospace;
+  flex:none;
+}
+
+.rrow {
+  display:flex;
+  align-items:center;
+  gap:14px;
+  padding:9px 14px;
+  border-bottom:1px solid var(--line2);
+  cursor:pointer;
+}
+
+.rrow .rno {
+  width:34px;
+  color:var(--muted);
+  text-align:center;
+  border-right:1px solid var(--line2);
+  margin:-9px 0;
+  padding:9px 0;
+}
+
+.rrow :global(.svg) {
+  opacity:0;
+  color:var(--muted);
+}
+
+.rrow:global(.sel) {
+  background:color-mix(in srgb,var(--ac,var(--ac-default)) 9%,var(--surface));
+}
+
+.rrow:global(.sel) :global(.svg) {
+  opacity:1;
+}
+
+.rcfoot {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-top:10px;
+}
+
+.srgrid {
+  display:grid;
+  grid-template-columns:minmax(380px,1.3fr) minmax(300px,1fr);
+  gap:20px;
+  align-items:start;
+}
+
+.srleft {
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.slist {
+  border:1px solid var(--line);
+  border-radius:var(--r-lg);
+  background:var(--surface);
+  overflow:hidden;
+  box-shadow:var(--shadow);
+}
+
+.slh {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:8px 12px;
+  background:color-mix(in srgb,var(--ac,var(--ac-default)) 12%,var(--surface));
+}
+
+.slh b {
+  font-size:15px;
+  color:var(--ac,var(--ac-default));
+  letter-spacing:.3px;
+}
+
+.slh small {
+  color:var(--muted);
+}
+
+.slb {
+  max-height:calc(50vh - 150px);
+  min-height:150px;
+  overflow:auto;
+}
+
+.slb table {
+  border:0;
+  box-shadow:none;
+  border-radius:0;
+}
+
+.slb th {
+  position:sticky;
+  top:0;
+}
+
+.advwrap {
+  min-height:calc(100vh - 430px);
+  max-height:calc(100vh - 430px);
+  border-radius:var(--r-md) var(--r-md) 0 0;
+}
+
+.advt {
+  width:100%;
+  box-shadow:none;
+  border:0;
+  border-radius:0;
+}
+
+.advt th {
+  position:sticky;
+  top:0;
+  z-index:1;
+}
+
+.advhead td {
+  background:#6b2438;
+  color:var(--c-white);
+  cursor:pointer;
+  border-bottom:1px solid rgba(255,255,255,.12);
+  padding:9px 10px;
+}
+
+.advhead:global(.done) td {
+  background:#4b5260;
+}
+
+.advhead b {
+  margin-right:18px;
+}
+
+.advhead small {
+  opacity:.8;
+}
+
+.advhead .fbox {
+  margin-right:12px;
+  color:var(--c-white);
+}
+
+.advt tr:global(.sel) td {
+  background:color-mix(in srgb,var(--ac,var(--ac-default)) 14%,var(--surface));
+}
+
+.advt tr:global(.posted) td {
+  color:var(--muted);
+}
+
+.advfoot {
+  display:flex;
+  align-items:flex-end;
+  gap:14px;
+  flex-wrap:wrap;
+  margin-top:4px;
+}
+
+[data-theme=dark] .advhead td {
+  background:#4c2030;
+}
