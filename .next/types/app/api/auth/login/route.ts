@@ -1,8 +1,8 @@
-// File: /workspaces/vscode/app/api/cashbook/route.js
-import * as entry from '../../../../../app/api/cashbook/route.js'
+// File: /workspaces/vscode/app/api/auth/login/route.js
+import * as entry from '../../../../../../app/api/auth/login/route.js'
 import type { NextRequest } from 'next/server.js'
 
-type TEntry = typeof import('../../../../../app/api/cashbook/route.js')
+type TEntry = typeof import('../../../../../../app/api/auth/login/route.js')
 
 // Check that the entry is a valid entry
 checkFields<Diff<{

@@ -1966,6 +1966,194 @@ footer .sidebar_low__0_3HT {
   color:var(--c-white)!important;
 }
 
+/* ---- Payments / Receipts reports (summary and details) ---- */
+.cash_crwrap__erXUg {
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.cash_crk__PNuoC {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  grid-gap:12px;
+  gap:12px;
+}
+
+.cash_crc__XZPso {
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+  min-width:0;
+  padding:12px 16px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:4px solid var(--rep,var(--ac));
+  border-radius:var(--r-lg);
+  box-shadow:var(--shadow);
+}
+
+.cash_crc__XZPso>span {
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.5px;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+.cash_crc__XZPso>b {
+  font-size:20px;
+  letter-spacing:-.3px;
+  white-space:nowrap;
+}
+
+.cash_crc__XZPso>small {
+  color:var(--muted);
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.cash_crtools__GZ_iL {
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  padding:12px 16px;
+}
+
+.cash_crrow__I0nTW {
+  display:flex;
+  align-items:flex-end;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.cash_crl__lml7j {
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.4px;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+.cash_crl__lml7j select,.cash_crl__lml7j input {
+  font-size:13px;
+  font-weight:400;
+  letter-spacing:0;
+  text-transform:none;
+  color:var(--text);
+}
+
+.cash_crgrid__X6AtI {
+  min-height:200px;
+  max-height:calc(100vh - 520px);
+  overflow:auto;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--r-lg) var(--r-lg) 0 0;
+}
+
+.cash_crtable__THTJa {
+  width:100%;
+  border:0;
+  border-radius:0;
+  box-shadow:none;
+}
+
+.cash_crtable__THTJa th {
+  position:-webkit-sticky;
+  position:sticky;
+  top:0;
+  z-index:1;
+}
+
+.cash_crtable__THTJa tbody tr {
+  cursor:pointer;
+}
+
+.cash_sortb__r6wMq {
+  padding:0;
+  border:0;
+  background:none;
+  color:inherit;
+  font:inherit;
+  letter-spacing:inherit;
+  text-transform:inherit;
+  box-shadow:none;
+}
+
+.cash_sortb__r6wMq:hover:not(:disabled) {
+  background:none;
+  box-shadow:none;
+  color:var(--ac);
+}
+
+.cash_grph__0glHZ td {
+  background:color-mix(in srgb,var(--rep,var(--ac)) 10%,var(--surface));
+  color:var(--rep,var(--ac));
+}
+
+.cash_wrapc__WQBug {
+  white-space:normal;
+  word-break:break-word;
+}
+
+.cash_amt__fV_YH {
+  color:var(--rep,var(--ac));
+  font-weight:700;
+}
+
+.cash_crtot__FHI9J td {
+  background:var(--rep,var(--ac));
+  color:var(--c-white);
+  font-weight:700;
+  border:0;
+}
+
+.cash_fbox__Awt8B {
+  display:inline-grid;
+  place-items:center;
+  width:16px;
+  height:16px;
+  border:1px solid currentColor;
+  border-radius:3px;
+  font:700 13px/1 monospace;
+  color:var(--muted);
+}
+
+.cash_share__XxWAS {
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.cash_share__XxWAS i {
+  display:block;
+  height:6px;
+  border-radius:3px;
+  background:var(--rep,var(--ac));
+  opacity:.75;
+}
+
+.cash_share__XxWAS small {
+  color:var(--muted);
+}
+
+.cash_subrow__HoArF td {
+  background:var(--surface2);
+  font-size:12px;
+  cursor:default;
+}
+
+.cash_crnote__yYO6y {
+  color:var(--muted);
+  font-size:12px;
+  margin-top:-6px;
+}
+
 /*!***********************************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[14].oneOf[7].use[2]!./node_modules/next/dist/build/webpack/loaders/postcss-loader/src/index.js??ruleSet[1].rules[14].oneOf[7].use[3]!./app/styles/sales.module.css ***!
   \***********************************************************************************************************************************************************************************************************************************************************************/

@@ -215,7 +215,7 @@ const RIBBON = {
   HELP: [['Help', [['Support', 'headset'], ['Updates', 'cloud'], ['Keyboard Shortcuts', 'kbd']]]],
 };
 Object.values(RIBBON).flat().forEach(([, its]) => its.forEach(([n, i]) => { ICON_OF[n] = i; }));
-const SCREEN_COLOR = { 'Cash Receipt': '#2e7d32', 'Cash Book': '#2347b0' };
+const SCREEN_COLOR = { 'Cash Receipt': '#2e7d32', 'Cash Book': '#2347b0', 'Receipts Summary': '#2e7d32', 'Receipts Details': '#2e7d32' };
 const COLOR = { SALES: '#2e7d32', PURCHASE: '#2347b0', CASH: '#b4300f', ACCOUNTS: '#1f2937', PRODUCTS: '#2347b0', TOOLS: '#c2410c', HELP: '#1f2937' };
 const QUICK = ['Sales Invoice', 'Sales History', 'Sales Return', 'Return History', 'Purchase Invoice', 'Purchase History', 'Define Products', 'Cash Payment', 'Cash Receipt', 'Cash Book', 'Backup Data'];
 
@@ -270,7 +270,7 @@ export default function Home() {
   useEffect(() => { const f = (e) => open(e.detail); window.addEventListener('falcon-go', f); return () => window.removeEventListener('falcon-go', f); });
   const allScreens = [...new Set(Object.values(RIBBON).flat().flatMap(([, it]) => it.map(([n]) => n)))];
   const q1 = sq.trim().toLowerCase(), sHits = q1 ? allScreens.filter((n) => (n + ' ' + tr(n)).toLowerCase().includes(q1)).slice(0, 6) : [], pHits = q1 ? sprods.filter((p) => (p.name + ' ' + (p.code || '') + ' ' + (p.barcode || '')).toLowerCase().includes(q1)).slice(0, 5) : [];
-  const SCREEN = { Dashboard, 'Sales History': SalesHistory, 'Pending Entries': Pending, 'Change Password': ChangePassword, 'Define Products': Products, 'Audit Log': Audit, Settings, 'Users Manager': UsersScreen, 'Look & Feel': LookScreen, 'Printer Settings': PrinterScreen, 'Keyboard Shortcuts': KeysScreen, Shortcuts: KeysScreen, 'Return History': ReturnHistory, Updates, Support, 'Bill Template': BillTemplate, 'Backup Data': Backup, 'Purchase Invoice': PurchaseInvoice, 'Purchase History': PurchaseHistory, 'Purchase Return': PurchaseReturnScreen, 'Purchase Return History': PurchaseReturnHistory, 'Advance Sales': AdvanceSales, 'Sales Report': SalesReport, 'Stock Analysis': StockAnalysis, 'Reports Center': ReportsCenter, 'Sales Summary': SalesSummaryScreen, 'Stock Report': StockReportScreen, 'Theme Setup': LookScreen, 'Cash Payment': CashPayment, 'Cash Receipt': CashReceipt, 'Cash Book': CashBook };
+  const SCREEN = { Dashboard, 'Sales History': SalesHistory, 'Pending Entries': Pending, 'Change Password': ChangePassword, 'Define Products': Products, 'Audit Log': Audit, Settings, 'Users Manager': UsersScreen, 'Look & Feel': LookScreen, 'Printer Settings': PrinterScreen, 'Keyboard Shortcuts': KeysScreen, Shortcuts: KeysScreen, 'Return History': ReturnHistory, Updates, Support, 'Bill Template': BillTemplate, 'Backup Data': Backup, 'Purchase Invoice': PurchaseInvoice, 'Purchase History': PurchaseHistory, 'Purchase Return': PurchaseReturnScreen, 'Purchase Return History': PurchaseReturnHistory, 'Advance Sales': AdvanceSales, 'Sales Report': SalesReport, 'Stock Analysis': StockAnalysis, 'Reports Center': ReportsCenter, 'Sales Summary': SalesSummaryScreen, 'Stock Report': StockReportScreen, 'Theme Setup': LookScreen, 'Payments Summary': PaymentsSummary, 'Payments Details': PaymentsDetails, 'Receipts Summary': ReceiptsSummary, 'Receipts Details': ReceiptsDetails, 'Cash Payment': CashPayment, 'Cash Receipt': CashReceipt, 'Cash Book': CashBook };
   const View = posKind ? null : SCREEN[screen];
   const d = now ? now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-') : '';
   const wd = now ? now.toLocaleDateString('en-US', { weekday: 'long' }) : '';
@@ -2023,3 +2023,116 @@ function AdvanceSales({ onClose }) {
 }
 
 const UsersScreen = SettingsAt('staff'), LookScreen = SettingsAt('look'), PrinterScreen = SettingsAt('printer'), KeysScreen = SettingsAt('keys'), SalesSummaryScreen = ReportPage('p-sales'), StockReportScreen = ReportPage('st-all');
+
+// ---------- Cash reports: Payments / Receipts, Summary and Details (read the saved cash vouchers) ----------
+const crLines = (vouchers, kind, accts) => {
+  const catOf = (l) => (accts.find((a) => a.code === l.code) || accts.find((a) => String(a.title).toLowerCase() === String(l.title).toLowerCase()))?.category || '(other)';
+  return vouchers.filter((v) => v.kind === kind).flatMap((v) => (v.lines || []).map((l, i) => ({ key: v.id + ':' + i, v, no: v.voucherNo, date: v.date, code: l.code || '', title: l.title || '', particulars: l.particulars || '', remarks: v.remarks || '', user: v.user || '', amount: +l.amount || 0, cat: catOf(l) })));
+};
+const crFilter = (all, f) => {
+  const lo = f.from <= f.to ? f.from : f.to, hi = f.from <= f.to ? f.to : f.from, ql = String(f.q || '').trim().toLowerCase(), min = +f.min || 0;
+  return all.filter((r) => r.date >= lo && r.date <= hi && (!f.cat || r.cat === f.cat) && (!f.user || r.user === f.user) && r.amount >= min && (!ql || [r.title, r.code, r.particulars, r.no, r.remarks, r.user].join(' ').toLowerCase().includes(ql)));
+};
+const crTotals = (rows) => {
+  const total = rows.reduce((t, r) => t + r.amount, 0), vouchers = new Set(rows.map((r) => r.no)).size, accounts = new Set(rows.map((r) => r.code || r.title)).size;
+  const big = rows.reduce((b, r) => (r.amount > (b ? b.amount : 0) ? r : b), null);
+  return { total, vouchers, accounts, avg: vouchers ? total / vouchers : 0, big, entries: rows.length };
+};
+const CR_SUMSORT = { amountDesc: ['Amount: high to low', (a, b) => b.amount - a.amount], amountAsc: ['Amount: low to high', (a, b) => a.amount - b.amount], name: ['Account A–Z', (a, b) => a.title.localeCompare(b.title)], vouchers: ['Most vouchers', (a, b) => b.vouchers - a.vouchers || b.amount - a.amount] };
+const crSummary = (rows, sortKey) => {
+  const m = {}, total = rows.reduce((t, r) => t + r.amount, 0);
+  for (const r of rows) { const k = r.code || r.title, g = (m[k] ||= { key: k, code: r.code, title: r.title, cat: r.cat, set: new Set(), lines: [], amount: 0 }); g.set.add(r.no); g.lines.push(r); g.amount += r.amount; }
+  return Object.values(m).map((g) => ({ ...g, vouchers: g.set.size, entries: g.lines.length, share: total ? (g.amount / total) * 100 : 0 })).sort(CR_SUMSORT[sortKey][1]);
+};
+const CR_COL = { date: (a, b) => a.date.localeCompare(b.date) || a.no.localeCompare(b.no), no: (a, b) => a.no.localeCompare(b.no), title: (a, b) => a.title.localeCompare(b.title), amount: (a, b) => a.amount - b.amount, user: (a, b) => a.user.localeCompare(b.user) };
+const crDetails = (rows, sort, group) => {
+  const sorted = [...rows].sort((a, b) => sort.dir * CR_COL[sort.k](a, b));
+  if (group === 'none') return sorted.map((r) => ({ r }));
+  const keyOf = { date: (r) => r.date, account: (r) => r.title, user: (r) => r.user || '(none)' }[group], by = {}, out = [];
+  sorted.forEach((r) => (by[keyOf(r)] ||= []).push(r));
+  const keys = Object.keys(by).sort((a, b) => (group === 'date' ? b.localeCompare(a) : a.localeCompare(b)));   // newest date first, accounts and users A–Z
+  for (const k of keys) { out.push({ h: group === 'date' ? 'Dated ' + dd(k) : k, count: by[k].length, sub: by[k].reduce((t, r) => t + r.amount, 0) }); by[k].forEach((r) => out.push({ r })); }
+  return out;
+};
+
+function CashReport({ kind, mode, onClose }) {
+  const pay = kind === 'PAYMENT', isDet = mode === 'details', word = pay ? 'Payments' : 'Receipts', start = rangeChips()['This month'];
+  const [vch, setVch] = useState(null), [accts, setAccts] = useState([]), [shop, setShop] = useState({});
+  const [from, setFrom] = useState(start[0]), [to, setTo] = useState(start[1]), [chip, setChip] = useState('This month'), [q, setQ] = useState(''), [cat, setCat] = useState(''), [user, setUser] = useState(''), [min, setMin] = useState('');
+  const [sumSort, setSumSort] = useState('amountDesc'), [sort, setSort] = useState({ k: 'date', dir: -1 }), [group, setGroup] = useState('none'), [open, setOpen] = useState({});
+  const [dv, setDv] = useState(null), [pdf, setPdf] = useState(false), [pr, setPr] = useState(null);
+  const arr = (r) => (Array.isArray(r) ? r : []);
+  const load = () => { api('vouchers').then((r) => setVch(arr(r))); api('accounts').then((r) => setAccts(arr(r))); api('settings').then((r) => setShop(arr(r).find((x) => x.id === 'shop') || {})); };
+  useEffect(() => { load(); const k = (e) => { if (e.key === 'Escape') setDv(null); if (acts(e).includes('refresh')) { e.preventDefault(); load(); } }; window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k); }, []);
+  const all = useMemo(() => crLines(vch || [], kind, accts), [vch, accts, kind]);
+  if (!vch) return <p className="soon">Loading…</p>;
+  const f = { from, to, q, cat, user, min }, rows = crFilter(all, f), T = crTotals(rows), cats = [...new Set(all.map((r) => r.cat))].sort(), users = [...new Set(all.map((r) => r.user).filter(Boolean))].sort();
+  const summary = crSummary(rows, sumSort), disp = crDetails(rows, sort, group), chips = rangeChips(), filtered = !!(q.trim() || cat || user || +min);
+  const clear = () => { setQ(''); setCat(''); setUser(''); setMin(''); setFrom(start[0]); setTo(start[1]); setChip('This month'); };
+  const sortBy = (k) => setSort((s) => (s.k === k ? { k, dir: -s.dir } : { k, dir: k === 'amount' || k === 'date' ? -1 : 1 }));
+  const arrow = (k) => (sort.k === k ? (sort.dir > 0 ? ' ▲' : ' ▼') : '');
+  const th = (k, label, num) => <th className={num ? 'num' : ''} aria-sort={sort.k === k ? (sort.dir > 0 ? 'ascending' : 'descending') : 'none'}><button className={cssCash.sortb} onClick={() => sortBy(k)}>{label}{arrow(k)}</button></th>;
+  const title = `${word} ${isDet ? 'Details' : 'Summary'}`, sub = `${dmy(from <= to ? from : to)} to ${dmy(from <= to ? to : from)}${cat ? ' · ' + cat : ''}${user ? ' · by ' + user : ''}${+min ? ' · from Rs ' + min : ''}${q.trim() ? ` · "${q.trim()}"` : ''}`;
+  // the same numbers for CSV and the PDF sheet
+  const expCols = isDet ? [{ k: 'no', t: 'VOUCHER' }, { k: 'date', t: 'DATED' }, { k: 'title', t: 'TITLE OF A/C' }, { k: 'cat', t: 'CATEGORY' }, { k: 'particulars', t: 'PARTICULARS' }, { k: 'remarks', t: 'REMARKS' }, { k: 'user', t: 'USER' }, { k: 'amount', t: 'AMOUNT', n: 'm' }]
+    : [{ k: 'code', t: 'A/C CODE' }, { k: 'title', t: 'TITLE OF A/C' }, { k: 'cat', t: 'CATEGORY' }, { k: 'vouchers', t: 'VOUCHERS', n: 'i' }, { k: 'entries', t: 'ENTRIES', n: 'i' }, { k: 'amount', t: 'AMOUNT', n: 'm' }, { k: 'share', t: 'SHARE', n: 'p' }];
+  const expRows = isDet ? disp.map((d) => (d.h ? { _h: `${d.h} · ${d.count} entries · Rs ${n2(d.sub)}` } : { ...d.r, date: dd(d.r.date) })) : summary;
+  const expGrand = isDet ? { amount: T.total } : { vouchers: T.vouchers, entries: T.entries, amount: T.total, share: T.total ? 100 : 0 };
+  const doPrint = (v) => { setPr(v); setTimeout(() => { window.print(); setPr(null); }, 150); };
+  const goNew = () => window.dispatchEvent(new CustomEvent('falcon-go', { detail: pay ? 'Cash Payment' : 'Cash Receipt' }));
+  const voucherLink = (v) => <button className={`${cssButtons.lnk} mono`} onClick={() => setDv(v)} title="Open this voucher">{v.voucherNo}</button>;
+  const kpi = (l, v, s) => <div className={cssCash.crc}><span>{l}</span><b>{v}</b><small>{s}</small></div>;
+  const none = <tr><td colSpan="8" className="empty">{all.length === 0 ? <>No {word.toLowerCase()} have been recorded yet.<br /><button className="pri" onClick={goNew}>New {pay ? 'Payment' : 'Receipt'}</button></> : <>No {word.toLowerCase()} match these filters.<br /><button onClick={clear}>Clear filters</button></>}</td></tr>;
+  return <div className={cssCash.crwrap} style={{ '--rep': pay ? '#b4300f' : '#2e7d32' }}>
+    <div className={cssCash.crk}>
+      {kpi(`Total ${word.toLowerCase()}`, 'Rs ' + n2(T.total), `${T.entries} entr${T.entries === 1 ? 'y' : 'ies'}`)}
+      {kpi('Vouchers', T.vouchers.toLocaleString(), `${T.accounts} account${T.accounts === 1 ? '' : 's'}`)}
+      {kpi('Average per voucher', 'Rs ' + n2(T.avg), 'total ÷ vouchers')}
+      {kpi(`Largest ${pay ? 'payment' : 'receipt'}`, T.big ? 'Rs ' + n2(T.big.amount) : '—', T.big ? `${T.big.title} · ${T.big.no}` : 'nothing in this period')}
+    </div>
+    <div className={`${cssSurfaces.card} ${cssCash.crtools}`}>
+      <div className={cssCash.crrow}>
+        <div className={cssSurfaces.dr}><Ico n="cal" s={16} /><input type="date" aria-label="From date" value={from} onChange={(e) => { setFrom(e.target.value); setChip(''); }} /><span>→</span><input type="date" aria-label="To date" value={to} onChange={(e) => { setTo(e.target.value); setChip(''); }} /></div>
+        {Object.keys(chips).map((k) => <button key={k} className={chip === k ? `${cssButtons.chip} on` : cssButtons.chip} onClick={() => { setFrom(chips[k][0]); setTo(chips[k][1]); setChip(k); }}>{k}</button>)}
+        <span className="grow" /><button disabled={!filtered && chip === 'This month'} onClick={clear}>Clear filters</button>
+      </div>
+      <div className={cssCash.crrow}>
+        <label className={cssCash.crl}>Search<div className={`${cssSearch.gsw} ${cssSearch.rsearch}`}><Ico n="search" s={15} className={cssSearch.gsi} /><input style={{ width: 300 }} placeholder="Account, voucher #, particulars, remarks, user" value={q} onChange={(e) => setQ(e.target.value)} /></div></label>
+        <label className={cssCash.crl}>Category<select value={cat} onChange={(e) => setCat(e.target.value)}><option value="">All categories</option>{cats.map((c) => <option key={c}>{c}</option>)}</select></label>
+        <label className={cssCash.crl}>User<select value={user} onChange={(e) => setUser(e.target.value)}><option value="">All users</option>{users.map((u) => <option key={u}>{u}</option>)}</select></label>
+        <label className={cssCash.crl}>Amount from (Rs)<input type="number" min="0" style={{ width: 130 }} placeholder="0" value={min} onChange={(e) => setMin(e.target.value)} /></label>
+        {isDet ? <label className={cssCash.crl}>Group by<select value={group} onChange={(e) => setGroup(e.target.value)}><option value="none">No grouping</option><option value="date">Date</option><option value="account">Account</option><option value="user">User</option></select></label>
+          : <label className={cssCash.crl}>Sort by<select value={sumSort} onChange={(e) => setSumSort(e.target.value)}>{Object.entries(CR_SUMSORT).map(([k, [l]]) => <option key={k} value={k}>{l}</option>)}</select></label>}
+        {!isDet && <><span className="grow" /><button disabled={!summary.length} onClick={() => setOpen(Object.fromEntries(summary.map((g) => [g.key, true])))}>Expand all</button><button disabled={!summary.length} onClick={() => setOpen({})}>Collapse all</button></>}
+      </div>
+    </div>
+    <div className={cssCash.crgrid}>
+      {isDet ? <table className={cssCash.crtable}><thead><tr>{th('no', 'VOUCHER')}{th('date', 'DATED')}{th('title', 'TITLE OF A/C')}<th>CATEGORY</th><th>PARTICULARS</th><th>REMARKS</th>{th('user', 'USER')}{th('amount', 'AMOUNT', true)}</tr></thead>
+        <tbody>{disp.length === 0 && none}
+          {disp.map((d, i) => (d.h ? <tr key={'h' + i} className={cssCash.grph}><td colSpan="7"><b>{d.h}</b> <small>· {d.count} entr{d.count === 1 ? 'y' : 'ies'}</small></td><td className="num"><b>{n2(d.sub)}</b></td></tr>
+            : <tr key={d.r.key} onClick={() => setDv(d.r.v)}><td className="mono">{d.r.no}</td><td>{dd(d.r.date)}</td><td className={cssCash.wrapc}><b>{d.r.title}</b></td><td>{d.r.cat}</td><td className={cssCash.wrapc}>{d.r.particulars}</td><td className={cssCash.wrapc}>{d.r.remarks}</td><td>{d.r.user}</td><td className={`num ${cssCash.amt}`}>{n2(d.r.amount)}</td></tr>))}</tbody>
+        {disp.length > 0 && <tfoot><tr className={cssCash.crtot}><td colSpan="7">TOTAL · {T.entries} entries · {T.vouchers} vouchers</td><td className="num">{n2(T.total)}</td></tr></tfoot>}</table>
+        : <table className={cssCash.crtable}><thead><tr><th style={{ width: 34 }}></th><th>A/C CODE</th><th>TITLE OF A/C</th><th>CATEGORY</th><th className="num">VOUCHERS</th><th className="num">ENTRIES</th><th className="num">AMOUNT</th><th style={{ width: 170 }}>SHARE</th></tr></thead>
+          <tbody>{summary.length === 0 && none}
+            {summary.map((g) => [<tr key={g.key} onClick={() => setOpen({ ...open, [g.key]: !open[g.key] })} aria-expanded={!!open[g.key]}><td><span className={cssCash.fbox}>{open[g.key] ? '−' : '+'}</span></td><td className="mono">{g.code}</td><td className={cssCash.wrapc}><b>{g.title}</b></td><td>{g.cat}</td><td className="num">{g.vouchers}</td><td className="num">{g.entries}</td><td className={`num ${cssCash.amt}`}>{n2(g.amount)}</td><td><div className={cssCash.share}><i style={{ width: Math.max(2, g.share * 0.9) + 'px' }} /><small>{g.share.toFixed(1)}%</small></div></td></tr>,
+              ...(open[g.key] ? [...g.lines].sort((a, b) => b.date.localeCompare(a.date) || b.no.localeCompare(a.no)).map((l) => <tr key={g.key + l.key} className={cssCash.subrow}><td></td><td>{voucherLink(l.v)}</td><td className={cssCash.wrapc}>{l.particulars}{l.remarks && <small> · {l.remarks}</small>}</td><td>{dd(l.date)}</td><td colSpan="2">{l.user}</td><td className="num">{n2(l.amount)}</td><td></td></tr>) : [])])}</tbody>
+          {summary.length > 0 && <tfoot><tr className={cssCash.crtot}><td colSpan="4">TOTAL · {T.accounts} accounts</td><td className="num">{T.vouchers}</td><td className="num">{T.entries}</td><td className="num">{n2(T.total)}</td><td></td></tr></tfoot>}</table>}
+    </div>
+    <div className={cssCash.crnote}>Shows the vouchers saved on the Cash {pay ? 'Payment' : 'Receipt'} screen. Cash {pay ? 'refunds and cash purchases' : 'sales'} are in the Cash Book.</div>
+    <div className={cssButtons.btns}><button className="pri" onClick={goNew}><Ico n="plus" s={15} /> New {pay ? 'Payment' : 'Receipt'}</button><button onClick={load}><Ico n="refresh" s={15} /> Refresh <kbd>{KEYS.refresh}</kbd></button>
+      <button disabled={!rows.length} onClick={() => csvDownload(`${word.toLowerCase()}-${isDet ? 'details' : 'summary'}`, expCols, expRows, expGrand)}><Ico n="down" s={15} /> CSV</button><button onClick={() => setPdf(true)}><Ico n="file" s={15} /> View in PDF Mode</button>
+      <button disabled={!rows.length} onClick={() => { setPdf(true); setTimeout(() => window.print(), 250); }}><Ico n="print" s={15} /> Print</button><button onClick={onClose}>Close</button></div>
+    {dv && <div className={cssModals.modal} onClick={() => setDv(null)}><div className={`${cssModals.mbox} wide`} role="dialog" aria-modal="true" aria-label={`Voucher ${dv.voucherNo}`} onClick={(e) => e.stopPropagation()}>
+      <div className={`${cssModals.mhead} mhead`}><b className="mono" style={{ fontSize: 18 }}>{dv.voucherNo}</b><button className={cssButtons.px} aria-label="Close" onClick={() => setDv(null)}><Ico n="x" s={14} /></button></div>
+      <p style={{ margin: 0 }}>{dv.kind === 'PAYMENT' ? 'Payment voucher' : 'Receipt voucher'} · {dd(dv.date)} · by {dv.user}</p>{dv.remarks && <p style={{ margin: 0 }}>Remarks: {dv.remarks}</p>}
+      <table style={{ width: '100%' }}><thead><tr><th>#</th><th>A/C CODE</th><th>TITLE OF A/C</th><th>PARTICULARS</th><th className="num">AMOUNT</th></tr></thead><tbody>{dv.lines.map((l, i) => <tr key={i}><td>{i + 1}</td><td className="mono">{l.code}</td><td><b>{l.title}</b></td><td>{l.particulars}</td><td className="num">{n2(l.amount)}</td></tr>)}</tbody></table>
+      <div className={cssTables.dtot}><div className="b"><span>Total</span><i>{n2(dv.total)}</i></div></div>
+      <div className={cssButtons.btns} style={{ justifyContent: 'flex-end' }}><button onClick={() => doPrint(dv)}><Ico n="print" s={15} /> Print voucher</button><button className="pri" onClick={() => setDv(null)}>Done</button></div></div></div>}
+    {pdf && <PdfView title={title} sub={sub} shop={shop} onClose={() => setPdf(false)}><RTable cols={expCols} rows={expRows} grand={expGrand} /></PdfView>}
+    {pr && <VoucherReceipt pr={pr} shop={shop} />}
+  </div>;
+}
+const PaymentsSummary = (p) => <CashReport {...p} kind="PAYMENT" mode="summary" />;
+const PaymentsDetails = (p) => <CashReport {...p} kind="PAYMENT" mode="details" />;
+const ReceiptsSummary = (p) => <CashReport {...p} kind="RECEIPT" mode="summary" />;
+const ReceiptsDetails = (p) => <CashReport {...p} kind="RECEIPT" mode="details" />;
